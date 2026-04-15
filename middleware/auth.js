@@ -9,6 +9,11 @@ const protect = async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = await User.findById(decoded.id).select("-password");
+
+    // User may have been deleted after token was issued
+    if (!req.user)
+      return res.status(401).json({ error: "User no longer exists" });
+
     next();
   } catch {
     res.status(401).json({ error: "Invalid token" });

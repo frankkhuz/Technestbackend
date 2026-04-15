@@ -45,3 +45,9 @@ public/uploads/
 .cache/
 tmp/
 temp/
+
+node_modules/
+.env
+.env.local
+.env.production
+*.log
