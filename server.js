@@ -15,7 +15,6 @@ const listingRoutes = require("./routes/listings"); // ← ADD THIS
 
 const app = express();
 
-// ─── CORS ─────────────────────────────────────────────────────────────────────
 const allowedOrigins = [
   process.env.CLIENT_URL,
   "http://localhost:3000",
@@ -35,11 +34,9 @@ app.use(
   })
 );
 
-// ─── Middleware ───────────────────────────────────────────────────────────────
 app.use(helmet());
 app.use(express.json({ limit: "10kb" }));
 
-// ─── General Rate Limiter ─────────────────────────────────────────────────────
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
@@ -47,20 +44,17 @@ const limiter = rateLimit({
 });
 app.use("/api/", limiter);
 
-// ─── Routes ───────────────────────────────────────────────────────────────────
 app.use("/api/gadgets", gadgetRoutes);
 app.use("/api/prices", priceRoutes);
 app.use("/api/devices", deviceRoutes);
 app.use("/api/recommendations", recommendRoutes);
 app.use("/api/auth", authRoutes);
-app.use("/api/listings", listingRoutes); // ← ADD THIS
+app.use("/api/listings", listingRoutes);
 
-// ─── Health Check ─────────────────────────────────────────────────────────────
 app.get("/", (req, res) => {
   res.json({ status: "Tech Nest Intelligence API is live 🚀" });
 });
 
-// ─── Global Error Handler ─────────────────────────────────────────────────────
 app.use((err, req, res, next) => {
   console.error(err.stack);
   const isDev = process.env.NODE_ENV === "development";
@@ -69,7 +63,6 @@ app.use((err, req, res, next) => {
   });
 });
 
-// ─── Start Server ─────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 5000;
 
 connectDB().then(() => {
