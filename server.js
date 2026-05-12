@@ -11,9 +11,10 @@ const priceRoutes = require("./routes/prices");
 const deviceRoutes = require("./routes/devices");
 const recommendRoutes = require("./routes/recommendations");
 const authRoutes = require("./routes/auth");
-const listingRoutes = require("./routes/listings"); // ← ADD THIS
+const listingRoutes = require("./routes/listings");
 
 const app = express();
+app.set("trust proxy", 1); 
 
 const allowedOrigins = [
   process.env.CLIENT_URL,
@@ -49,7 +50,7 @@ app.use("/api/prices", priceRoutes);
 app.use("/api/devices", deviceRoutes);
 app.use("/api/recommendations", recommendRoutes);
 app.use("/api/auth", authRoutes);
-app.use("/api/listings", listingRoutes);
+app.use("/api/listings", listingRoutes); 
 
 app.get("/", (req, res) => {
   res.json({ status: "Tech Nest Intelligence API is live 🚀" });
