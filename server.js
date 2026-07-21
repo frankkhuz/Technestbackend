@@ -82,6 +82,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/listings", listingRoutes);
 app.use("/api/vendors", vendorRoutes);
 app.use("/api/me", meRoutes);
+app.use("/api/admin", adminRoutes);
 app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.get("/", (req, res) => {

@@ -33,6 +33,10 @@ router.patch("/upgrade", protect, async (req, res, next) => {
   }
 });
 
+// CHANGED: this endpoint used to set vendorVerified = true immediately,
+// which let any vendor self-approve. It now only submits the vendor
+// profile for review. An admin must approve via /api/admin/vendors/:id/approve
+// before vendorVerified becomes true.
 router.patch("/verify", protect, async (req, res, next) => {
   try {
     if (req.user.userType !== "vendor")
@@ -48,10 +52,10 @@ router.patch("/verify", protect, async (req, res, next) => {
       );
 
     req.user.vendorProfile = { phone, businessRegNumber, shopAddress };
-    req.user.vendorVerified = true;
+    // vendorVerified intentionally left untouched here — admin approves separately
     await req.user.save();
 
-    sendSuccess(res, 200, "Vendor verified", {
+    sendSuccess(res, 200, "Vendor profile submitted for review", {
       id: req.user._id,
       name: req.user.name,
       email: req.user.email,
