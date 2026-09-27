@@ -23,4 +23,9 @@ const verifyCsrfToken = (req, res, next) => {
   next();
 };
 
-module.exports = { issueCsrfToken, verifyCsrfToken };
+// For routes open to guests: cookie-authenticated requests still need the
+// CSRF header (that's where CSRF risk comes from), guests don't have one.
+const verifyCsrfIfAuthenticated = (req, res, next) =>
+  req.user ? verifyCsrfToken(req, res, next) : next();
+
+module.exports = { issueCsrfToken, verifyCsrfToken, verifyCsrfIfAuthenticated };

@@ -20,6 +20,17 @@ const meRoutes = require("./routes/me");
 const adminRoutes = require("./routes/admin");
 const uploadRoutes = require("./routes/uploads");
 const notificationRoutes = require("./routes/notifications");
+const productRoutes = require("./routes/products");
+const checkoutRoutes = require("./routes/checkout");
+const orderRoutes = require("./routes/orders");
+const transactionRoutes = require("./routes/transactions");
+const payoutRoutes = require("./routes/payout");
+const valuationRoutes = require("./routes/valuation");
+const gadgetRecommendRoutes = require("./routes/gadgetRecommend");
+const supportRoutes = require("./routes/support");
+const repairTriageRoutes = require("./routes/repairTriage");
+const aiStatusRoutes = require("./routes/aiStatus");
+const adminPriceRoutes = require("./routes/adminPrices");
 const swaggerUi = require("swagger-ui-express");
 const swaggerSpec = require("./config/swagger");
 
@@ -51,6 +62,18 @@ if (
   process.exit(1);
 }
 
+if (!process.env.PAYSTACK_SECRET_KEY) {
+  console.warn(
+    "PAYSTACK_SECRET_KEY is not set — checkout and seller payouts will return 503 until it is."
+  );
+}
+
+if (!process.env.ANTHROPIC_API_KEY) {
+  console.warn(
+    "ANTHROPIC_API_KEY is not set — AI extras are off; every feature uses its free built-in version."
+  );
+}
+
 const app = express();
 app.set("trust proxy", 1);
 
@@ -77,6 +100,16 @@ app.use(
 );
 
 app.use(helmet());
+
+// Paystack webhook needs the raw body to verify its signature, so it's
+// registered before the JSON parser (and before the rate limiter — Paystack
+// retries on failure and shouldn't be throttled like a browser).
+app.post(
+  "/api/checkout/webhook",
+  express.raw({ type: "application/json", limit: "100kb" }),
+  checkoutRoutes.webhookHandler
+);
+
 app.use(express.json({ limit: "10kb" }));
 app.use(cookieParser());
 app.use(sanitizeRequest);
@@ -95,10 +128,23 @@ app.use("/api/recommendations", recommendRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/listings", listingRoutes);
 app.use("/api/vendors", vendorRoutes);
+// The frontend dashboard calls /api/vendor/inventory and /api/vendor/bid
+app.use("/api/vendor", vendorRoutes);
 app.use("/api/me", meRoutes);
+app.use("/api/admin/prices", adminPriceRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/uploads", uploadRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/products", productRoutes);
+app.use("/api/checkout", checkoutRoutes);
+app.use("/api/orders", orderRoutes);
+app.use("/api/transactions", transactionRoutes);
+app.use("/api/payout-account", payoutRoutes);
+app.use("/api/valuation", valuationRoutes);
+app.use("/api/gadget-recommend", gadgetRecommendRoutes);
+app.use("/api/chat", supportRoutes);
+app.use("/api/repair-triage", repairTriageRoutes);
+app.use("/api/ai", aiStatusRoutes);
 app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.get("/", (req, res) => {
@@ -121,6 +167,12 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
-connectDB().then(() => {
+connectDB().then(async () => {
+  try {
+    await require("./utils/valuation").reloadDevices();
+  } catch (err) {
+    // Valuation falls back to the bundled JSON prices until this succeeds
+    console.error("Could not load valuation devices:", err.message);
+  }
   app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 });

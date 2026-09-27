@@ -18,6 +18,22 @@ const protect = async (req, res, next) => {
   }
 };
 
+// Like protect, but lets guests through with req.user = null. For routes that
+// work for everyone but do more (e.g. save history) for signed-in users.
+const optionalAuth = async (req, res, next) => {
+  req.user = null;
+  const token = req.cookies?.accessToken;
+  if (!token) return next();
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = await User.findById(decoded.id).select("-password");
+  } catch {
+    // Expired/invalid token — treat as a guest rather than failing the request
+  }
+  next();
+};
+
 const restrictTo =
   (...types) =>
   (req, res, next) => {
@@ -42,6 +58,7 @@ const requireVendorVerified = (req, res, next) => {
 
 module.exports = {
   protect,
+  optionalAuth,
   restrictTo,
   requireVerified,
   requireVendorVerified,

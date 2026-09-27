@@ -1,0 +1,2290 @@
+{
+ "_readme": "Market price quotes used as the base (best-condition) price for swap/sell valuations and the /buy catalog's UK-used prices. Edit this file (or add a source) then run `npm run prices:apply`. Raw pasted lists are kept in data/priceLists/raw/.",
+ "sources": {
+  "dealer-2026-08-02": {
+   "name": "Dealer list — used iPhones, Pixels, Samsung",
+   "date": "2026-08-02",
+   "raw": "data/priceLists/raw/2026-08-02-dealer-used-iphones-pixels.txt",
+   "notes": "'Good deals' section (single cosmetic-condition units) excluded."
+  },
+  "skyy-iphones": {
+   "name": "Skyygadget reseller list — UK used iPhones (physical SIM + eSIM)",
+   "date": null,
+   "raw": "data/priceLists/raw/skyygadget-uk-used-iphones.txt",
+   "notes": "Listed as 'ALL MINT'. 'SE 2nd Gen 255GB' read as 256GB."
+  },
+  "skyy-samsung": {
+   "name": "Skyygadget reseller list — UK used Samsung",
+   "date": null,
+   "raw": "data/priceLists/raw/skyygadget-uk-used-samsung.txt",
+   "notes": "Entries without storage use the model's base UK storage (storageAssumed: true). 'New' entries are brand-new prices."
+  }
+ },
+ "devices": [
+  {
+   "id": "iphone-xr-64",
+   "subType": "iphone",
+   "name": "iPhone XR",
+   "storage": "64GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 185000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-xr-128",
+   "subType": "iphone",
+   "name": "iPhone XR",
+   "storage": "128GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 208000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-xr-256",
+   "subType": "iphone",
+   "name": "iPhone XR",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 220000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-11-64",
+   "subType": "iphone",
+   "name": "iPhone 11",
+   "storage": "64GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 215000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-11-128",
+   "subType": "iphone",
+   "name": "iPhone 11",
+   "storage": "128GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 250000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-11-256",
+   "subType": "iphone",
+   "name": "iPhone 11",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 265000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-11-pro-64",
+   "subType": "iphone",
+   "name": "iPhone 11 Pro",
+   "storage": "64GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 265000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-11-pro-256",
+   "subType": "iphone",
+   "name": "iPhone 11 Pro",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 300000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-11-pro-512",
+   "subType": "iphone",
+   "name": "iPhone 11 Pro",
+   "storage": "512GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 310000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-11-pro-max-64",
+   "subType": "iphone",
+   "name": "iPhone 11 Pro Max",
+   "storage": "64GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 285000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-11-pro-max-256",
+   "subType": "iphone",
+   "name": "iPhone 11 Pro Max",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 320000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-11-pro-max-512",
+   "subType": "iphone",
+   "name": "iPhone 11 Pro Max",
+   "storage": "512GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 340000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-12-64",
+   "subType": "iphone",
+   "name": "iPhone 12",
+   "storage": "64GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 240000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    },
+    {
+     "source": "skyy-iphones",
+     "price": 275000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-12-128",
+   "subType": "iphone",
+   "name": "iPhone 12",
+   "storage": "128GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 280000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    },
+    {
+     "source": "skyy-iphones",
+     "price": 300000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-12-256",
+   "subType": "iphone",
+   "name": "iPhone 12",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 300000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    },
+    {
+     "source": "skyy-iphones",
+     "price": 330000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-12-pro-128",
+   "subType": "iphone",
+   "name": "iPhone 12 Pro",
+   "storage": "128GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 345000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-12-pro-256",
+   "subType": "iphone",
+   "name": "iPhone 12 Pro",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 365000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-12-pro-max-128",
+   "subType": "iphone",
+   "name": "iPhone 12 Pro Max",
+   "storage": "128GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 420000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    },
+    {
+     "source": "skyy-iphones",
+     "price": 440000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-12-pro-max-256",
+   "subType": "iphone",
+   "name": "iPhone 12 Pro Max",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 455000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-12-pro-max-512",
+   "subType": "iphone",
+   "name": "iPhone 12 Pro Max",
+   "storage": "512GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 470000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-13-128",
+   "subType": "iphone",
+   "name": "iPhone 13",
+   "storage": "128GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 350000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    },
+    {
+     "source": "skyy-iphones",
+     "price": 385000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-13-256",
+   "subType": "iphone",
+   "name": "iPhone 13",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 385000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    },
+    {
+     "source": "skyy-iphones",
+     "price": 420000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-13-512",
+   "subType": "iphone",
+   "name": "iPhone 13",
+   "storage": "512GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 415000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-13-pro-128",
+   "subType": "iphone",
+   "name": "iPhone 13 Pro",
+   "storage": "128GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 460000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    },
+    {
+     "source": "skyy-iphones",
+     "price": 490000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-13-pro-256",
+   "subType": "iphone",
+   "name": "iPhone 13 Pro",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 500000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    },
+    {
+     "source": "skyy-iphones",
+     "price": 540000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-13-pro-max-128",
+   "subType": "iphone",
+   "name": "iPhone 13 Pro Max",
+   "storage": "128GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 520000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-14-128",
+   "subType": "iphone",
+   "name": "iPhone 14",
+   "storage": "128GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 370000,
+     "sim": "esim",
+     "condition": "uk-used"
+    },
+    {
+     "source": "dealer-2026-08-02",
+     "price": 410000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    },
+    {
+     "source": "skyy-iphones",
+     "price": 470000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-14-256",
+   "subType": "iphone",
+   "name": "iPhone 14",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 490000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    },
+    {
+     "source": "skyy-iphones",
+     "price": 520000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-14-plus-128",
+   "subType": "iphone",
+   "name": "iPhone 14 Plus",
+   "storage": "128GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 480000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    },
+    {
+     "source": "skyy-iphones",
+     "price": 510000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-14-plus-256",
+   "subType": "iphone",
+   "name": "iPhone 14 Plus",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 520000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-14-pro-128",
+   "subType": "iphone",
+   "name": "iPhone 14 Pro",
+   "storage": "128GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 630000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    },
+    {
+     "source": "skyy-iphones",
+     "price": 620000,
+     "sim": "esim",
+     "condition": "uk-used"
+    },
+    {
+     "source": "skyy-iphones",
+     "price": 680000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-14-pro-256",
+   "subType": "iphone",
+   "name": "iPhone 14 Pro",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 680000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    },
+    {
+     "source": "skyy-iphones",
+     "price": 710000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-14-pro-1tb",
+   "subType": "iphone",
+   "name": "iPhone 14 Pro",
+   "storage": "1TB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 740000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-14-pro-max-128",
+   "subType": "iphone",
+   "name": "iPhone 14 Pro Max",
+   "storage": "128GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 730000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    },
+    {
+     "source": "skyy-iphones",
+     "price": 760000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-14-pro-max-256",
+   "subType": "iphone",
+   "name": "iPhone 14 Pro Max",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 800000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    },
+    {
+     "source": "skyy-iphones",
+     "price": 820000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-14-pro-max-512",
+   "subType": "iphone",
+   "name": "iPhone 14 Pro Max",
+   "storage": "512GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 830000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    },
+    {
+     "source": "skyy-iphones",
+     "price": 760000,
+     "sim": "esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-14-pro-max-1tb",
+   "subType": "iphone",
+   "name": "iPhone 14 Pro Max",
+   "storage": "1TB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 870000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-15-128",
+   "subType": "iphone",
+   "name": "iPhone 15",
+   "storage": "128GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 580000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    },
+    {
+     "source": "skyy-iphones",
+     "price": 670000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-15-256",
+   "subType": "iphone",
+   "name": "iPhone 15",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 650000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    },
+    {
+     "source": "skyy-iphones",
+     "price": 710000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-15-plus-128",
+   "subType": "iphone",
+   "name": "iPhone 15 Plus",
+   "storage": "128GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 655000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    },
+    {
+     "source": "skyy-iphones",
+     "price": 710000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-15-pro-max-256",
+   "subType": "iphone",
+   "name": "iPhone 15 Pro Max",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 930000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    },
+    {
+     "source": "skyy-iphones",
+     "price": 980000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-15-pro-max-512",
+   "subType": "iphone",
+   "name": "iPhone 15 Pro Max",
+   "storage": "512GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 1020000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-16-128",
+   "subType": "iphone",
+   "name": "iPhone 16",
+   "storage": "128GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 800000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    },
+    {
+     "source": "skyy-iphones",
+     "price": 850000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-16-256",
+   "subType": "iphone",
+   "name": "iPhone 16",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 890000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-16-plus-128",
+   "subType": "iphone",
+   "name": "iPhone 16 Plus",
+   "storage": "128GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 900000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    },
+    {
+     "source": "skyy-iphones",
+     "price": 880000,
+     "sim": "esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-16-plus-256",
+   "subType": "iphone",
+   "name": "iPhone 16 Plus",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 995000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-16-pro-128",
+   "subType": "iphone",
+   "name": "iPhone 16 Pro",
+   "storage": "128GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 980000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-16-pro-256",
+   "subType": "iphone",
+   "name": "iPhone 16 Pro",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 1080000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-16-pro-max-256",
+   "subType": "iphone",
+   "name": "iPhone 16 Pro Max",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 1250000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-17-pro-max-256",
+   "subType": "iphone",
+   "name": "iPhone 17 Pro Max",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 1650000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-17-pro-max-512",
+   "subType": "iphone",
+   "name": "iPhone 17 Pro Max",
+   "storage": "512GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 1650000,
+     "sim": "esim",
+     "condition": "uk-used"
+    },
+    {
+     "source": "dealer-2026-08-02",
+     "price": 1840000,
+     "sim": "phys+esim",
+     "condition": "uk-used",
+     "note": "listed as N1.830M | N1.850M; midpoint used"
+    }
+   ]
+  },
+  {
+   "id": "pixel-7-pro-128",
+   "subType": "android",
+   "name": "Google Pixel 7 Pro",
+   "storage": "128GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 320000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "pixel-7-pro-256",
+   "subType": "android",
+   "name": "Google Pixel 7 Pro",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 360000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "pixel-8a-128",
+   "subType": "android",
+   "name": "Google Pixel 8a",
+   "storage": "128GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 320000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "pixel-8-128",
+   "subType": "android",
+   "name": "Google Pixel 8",
+   "storage": "128GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 340000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "pixel-8-256",
+   "subType": "android",
+   "name": "Google Pixel 8",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 360000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "pixel-8-pro-128",
+   "subType": "android",
+   "name": "Google Pixel 8 Pro",
+   "storage": "128GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 420000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "pixel-8-pro-256",
+   "subType": "android",
+   "name": "Google Pixel 8 Pro",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 480000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "pixel-9-128",
+   "subType": "android",
+   "name": "Google Pixel 9",
+   "storage": "128GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 530000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "pixel-9-256",
+   "subType": "android",
+   "name": "Google Pixel 9",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 600000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "pixel-9-pro-128",
+   "subType": "android",
+   "name": "Google Pixel 9 Pro",
+   "storage": "128GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 610000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "pixel-9-pro-256",
+   "subType": "android",
+   "name": "Google Pixel 9 Pro",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 680000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "pixel-9-pro-xl-128",
+   "subType": "android",
+   "name": "Google Pixel 9 Pro XL",
+   "storage": "128GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 650000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "pixel-9-pro-xl-256",
+   "subType": "android",
+   "name": "Google Pixel 9 Pro XL",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 720000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "pixel-10a-128",
+   "subType": "android",
+   "name": "Google Pixel 10a",
+   "storage": "128GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 470000,
+     "sim": "esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "pixel-10-pro-128",
+   "subType": "android",
+   "name": "Google Pixel 10 Pro",
+   "storage": "128GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 780000,
+     "sim": "esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "pixel-10-pro-256",
+   "subType": "android",
+   "name": "Google Pixel 10 Pro",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 820000,
+     "sim": "esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "pixel-10-pro-xl-256",
+   "subType": "android",
+   "name": "Google Pixel 10 Pro XL",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 890000,
+     "sim": "esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "z-flip-5-256",
+   "subType": "android",
+   "name": "Samsung Galaxy Z Flip 5",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "dealer-2026-08-02",
+     "price": 400000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    },
+    {
+     "source": "skyy-samsung",
+     "price": 370000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-se-2-64",
+   "subType": "iphone",
+   "name": "iPhone SE (2nd Gen)",
+   "storage": "64GB",
+   "quotes": [
+    {
+     "source": "skyy-iphones",
+     "price": 160000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-se-2-128",
+   "subType": "iphone",
+   "name": "iPhone SE (2nd Gen)",
+   "storage": "128GB",
+   "quotes": [
+    {
+     "source": "skyy-iphones",
+     "price": 180000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-se-2-256",
+   "subType": "iphone",
+   "name": "iPhone SE (2nd Gen)",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "skyy-iphones",
+     "price": 200000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-se-3-64",
+   "subType": "iphone",
+   "name": "iPhone SE (3rd Gen)",
+   "storage": "64GB",
+   "quotes": [
+    {
+     "source": "skyy-iphones",
+     "price": 180000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-se-3-128",
+   "subType": "iphone",
+   "name": "iPhone SE (3rd Gen)",
+   "storage": "128GB",
+   "quotes": [
+    {
+     "source": "skyy-iphones",
+     "price": 200000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-xs-256",
+   "subType": "iphone",
+   "name": "iPhone XS",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "skyy-iphones",
+     "price": 200000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-xs-512",
+   "subType": "iphone",
+   "name": "iPhone XS",
+   "storage": "512GB",
+   "quotes": [
+    {
+     "source": "skyy-iphones",
+     "price": 230000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-15-plus-512",
+   "subType": "iphone",
+   "name": "iPhone 15 Plus",
+   "storage": "512GB",
+   "quotes": [
+    {
+     "source": "skyy-iphones",
+     "price": 770000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-15-pro-128",
+   "subType": "iphone",
+   "name": "iPhone 15 Pro",
+   "storage": "128GB",
+   "quotes": [
+    {
+     "source": "skyy-iphones",
+     "price": 820000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-15-pro-256",
+   "subType": "iphone",
+   "name": "iPhone 15 Pro",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "skyy-iphones",
+     "price": 880000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-16e-128",
+   "subType": "iphone",
+   "name": "iPhone 16e",
+   "storage": "128GB",
+   "quotes": [
+    {
+     "source": "skyy-iphones",
+     "price": 540000,
+     "sim": "esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-17-256",
+   "subType": "iphone",
+   "name": "iPhone 17",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "skyy-iphones",
+     "price": 980000,
+     "sim": "esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-air-256",
+   "subType": "iphone",
+   "name": "iPhone Air",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "skyy-iphones",
+     "price": 1120000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "iphone-air-512",
+   "subType": "iphone",
+   "name": "iPhone Air",
+   "storage": "512GB",
+   "quotes": [
+    {
+     "source": "skyy-iphones",
+     "price": 1220000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "s8-64",
+   "subType": "android",
+   "name": "Samsung S8",
+   "storage": "64GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 135000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ],
+   "storageAssumed": true
+  },
+  {
+   "id": "s8-active-64",
+   "subType": "android",
+   "name": "Samsung S8 Active",
+   "storage": "64GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 115000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ],
+   "storageAssumed": true
+  },
+  {
+   "id": "s8-plus-64",
+   "subType": "android",
+   "name": "Samsung S8+",
+   "storage": "64GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 150000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ],
+   "storageAssumed": true
+  },
+  {
+   "id": "s9-64",
+   "subType": "android",
+   "name": "Samsung S9",
+   "storage": "64GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 145000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ],
+   "storageAssumed": true
+  },
+  {
+   "id": "s9-plus-64",
+   "subType": "android",
+   "name": "Samsung S9+",
+   "storage": "64GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 170000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ],
+   "storageAssumed": true
+  },
+  {
+   "id": "s10e-128",
+   "subType": "android",
+   "name": "Samsung S10e",
+   "storage": "128GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 175000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ],
+   "storageAssumed": true
+  },
+  {
+   "id": "s10-128",
+   "subType": "android",
+   "name": "Samsung S10",
+   "storage": "128GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 220000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    },
+    {
+     "source": "skyy-samsung",
+     "price": 225000,
+     "sim": "dual-sim",
+     "condition": "uk-used"
+    }
+   ],
+   "storageAssumed": true
+  },
+  {
+   "id": "s10-plus-128",
+   "subType": "android",
+   "name": "Samsung S10+",
+   "storage": "128GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 250000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ],
+   "storageAssumed": true
+  },
+  {
+   "id": "s20-fe-128",
+   "subType": "android",
+   "name": "Samsung S20 FE",
+   "storage": "128GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 170000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ],
+   "storageAssumed": true
+  },
+  {
+   "id": "s20-128",
+   "subType": "android",
+   "name": "Samsung S20",
+   "storage": "128GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 205000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    },
+    {
+     "source": "skyy-samsung",
+     "price": 220000,
+     "sim": "dual-sim",
+     "condition": "uk-used"
+    }
+   ],
+   "storageAssumed": true
+  },
+  {
+   "id": "s20-plus-128",
+   "subType": "android",
+   "name": "Samsung S20+",
+   "storage": "128GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 220000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ],
+   "storageAssumed": true
+  },
+  {
+   "id": "s20-ultra-128",
+   "subType": "android",
+   "name": "Samsung S20 Ultra",
+   "storage": "128GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 275000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ],
+   "storageAssumed": true
+  },
+  {
+   "id": "s21-fe-128",
+   "subType": "android",
+   "name": "Samsung S21 FE",
+   "storage": "128GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 220000,
+     "sim": "dual-sim",
+     "condition": "uk-used"
+    }
+   ],
+   "storageAssumed": true
+  },
+  {
+   "id": "s21-128",
+   "subType": "android",
+   "name": "Samsung S21",
+   "storage": "128GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 235000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ],
+   "storageAssumed": true
+  },
+  {
+   "id": "s21-256",
+   "subType": "android",
+   "name": "Samsung S21",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 255000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "s21-plus-128",
+   "subType": "android",
+   "name": "Samsung S21+",
+   "storage": "128GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 250000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "s21-plus-256",
+   "subType": "android",
+   "name": "Samsung S21+",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 265000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "s21-ultra-128",
+   "subType": "android",
+   "name": "Samsung S21 Ultra",
+   "storage": "128GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 305000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "s21-ultra-256",
+   "subType": "android",
+   "name": "Samsung S21 Ultra",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 380000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "s22-128",
+   "subType": "android",
+   "name": "Samsung S22",
+   "storage": "128GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 285000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "s22-256",
+   "subType": "android",
+   "name": "Samsung S22",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 310000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "s22-plus-128",
+   "subType": "android",
+   "name": "Samsung S22+",
+   "storage": "128GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 300000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "s22-plus-256",
+   "subType": "android",
+   "name": "Samsung S22+",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 330000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "s22-ultra-128",
+   "subType": "android",
+   "name": "Samsung S22 Ultra",
+   "storage": "128GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 460000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "s22-ultra-256",
+   "subType": "android",
+   "name": "Samsung S22 Ultra",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 530000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "s22-ultra-512",
+   "subType": "android",
+   "name": "Samsung S22 Ultra",
+   "storage": "512GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 560000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "s23-128",
+   "subType": "android",
+   "name": "Samsung S23",
+   "storage": "128GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 370000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "s23-256",
+   "subType": "android",
+   "name": "Samsung S23",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 410000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "s23-plus-256",
+   "subType": "android",
+   "name": "Samsung S23+",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 460000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    },
+    {
+     "source": "skyy-samsung",
+     "price": 480000,
+     "sim": "dual-sim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "s23-plus-512",
+   "subType": "android",
+   "name": "Samsung S23+",
+   "storage": "512GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 500000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "s23-ultra-256",
+   "subType": "android",
+   "name": "Samsung S23 Ultra",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 640000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    },
+    {
+     "source": "skyy-samsung",
+     "price": 660000,
+     "sim": "dual-sim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "s23-ultra-512",
+   "subType": "android",
+   "name": "Samsung S23 Ultra",
+   "storage": "512GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 700000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "s24-128",
+   "subType": "android",
+   "name": "Samsung S24",
+   "storage": "128GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 500000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "s24-256",
+   "subType": "android",
+   "name": "Samsung S24",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 550000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "s24-plus-256",
+   "subType": "android",
+   "name": "Samsung S24+",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 610000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "s24-ultra-256",
+   "subType": "android",
+   "name": "Samsung S24 Ultra",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 910000,
+     "sim": "dual-sim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "s24-ultra-512",
+   "subType": "android",
+   "name": "Samsung S24 Ultra",
+   "storage": "512GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 985000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "s25-ultra-256",
+   "subType": "android",
+   "name": "Samsung S25 Ultra",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 1090000,
+     "sim": "phys+esim",
+     "condition": "new"
+    }
+   ]
+  },
+  {
+   "id": "s25-ultra-512",
+   "subType": "android",
+   "name": "Samsung S25 Ultra",
+   "storage": "512GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 1220000,
+     "sim": "phys+esim",
+     "condition": "new"
+    }
+   ]
+  },
+  {
+   "id": "s26-ultra-512",
+   "subType": "android",
+   "name": "Samsung S26 Ultra",
+   "storage": "512GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 1440000,
+     "sim": "phys+esim",
+     "condition": "new"
+    }
+   ]
+  },
+  {
+   "id": "note-8-64",
+   "subType": "android",
+   "name": "Samsung Note 8",
+   "storage": "64GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 160000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ],
+   "storageAssumed": true
+  },
+  {
+   "id": "note-9-128",
+   "subType": "android",
+   "name": "Samsung Note 9",
+   "storage": "128GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 175000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ],
+   "storageAssumed": true
+  },
+  {
+   "id": "note-10-256",
+   "subType": "android",
+   "name": "Samsung Note 10",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 220000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ],
+   "storageAssumed": true
+  },
+  {
+   "id": "note-10-plus-256",
+   "subType": "android",
+   "name": "Samsung Note 10+",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 290000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ],
+   "storageAssumed": true
+  },
+  {
+   "id": "note-20-256",
+   "subType": "android",
+   "name": "Samsung Note 20",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 240000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ],
+   "storageAssumed": true
+  },
+  {
+   "id": "note-20-ultra-256",
+   "subType": "android",
+   "name": "Samsung Note 20 Ultra",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 360000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    },
+    {
+     "source": "skyy-samsung",
+     "price": 410000,
+     "sim": "dual-sim",
+     "condition": "uk-used"
+    }
+   ],
+   "storageAssumed": true
+  },
+  {
+   "id": "z-flip-3-128",
+   "subType": "android",
+   "name": "Samsung Galaxy Z Flip 3",
+   "storage": "128GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 255000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "z-flip-3-256",
+   "subType": "android",
+   "name": "Samsung Galaxy Z Flip 3",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 265000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "z-flip-4-128",
+   "subType": "android",
+   "name": "Samsung Galaxy Z Flip 4",
+   "storage": "128GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 285000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "z-flip-4-256",
+   "subType": "android",
+   "name": "Samsung Galaxy Z Flip 4",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 300000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "z-flip-5-512",
+   "subType": "android",
+   "name": "Samsung Galaxy Z Flip 5",
+   "storage": "512GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 390000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "z-flip-6-256",
+   "subType": "android",
+   "name": "Samsung Galaxy Z Flip 6",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 460000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "z-flip-6-512",
+   "subType": "android",
+   "name": "Samsung Galaxy Z Flip 6",
+   "storage": "512GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 480000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "z-fold-3-256",
+   "subType": "android",
+   "name": "Samsung Galaxy Z Fold 3",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 515000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    },
+    {
+     "source": "skyy-samsung",
+     "price": 540000,
+     "sim": "phys+esim",
+     "condition": "new"
+    }
+   ]
+  },
+  {
+   "id": "z-fold-3-512",
+   "subType": "android",
+   "name": "Samsung Galaxy Z Fold 3",
+   "storage": "512GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 540000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    },
+    {
+     "source": "skyy-samsung",
+     "price": 570000,
+     "sim": "phys+esim",
+     "condition": "new"
+    }
+   ]
+  },
+  {
+   "id": "z-fold-4-256",
+   "subType": "android",
+   "name": "Samsung Galaxy Z Fold 4",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 550000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    },
+    {
+     "source": "skyy-samsung",
+     "price": 580000,
+     "sim": "phys+esim",
+     "condition": "new"
+    }
+   ]
+  },
+  {
+   "id": "z-fold-4-512",
+   "subType": "android",
+   "name": "Samsung Galaxy Z Fold 4",
+   "storage": "512GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 565000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    },
+    {
+     "source": "skyy-samsung",
+     "price": 590000,
+     "sim": "phys+esim",
+     "condition": "new"
+    }
+   ]
+  },
+  {
+   "id": "z-fold-5-256",
+   "subType": "android",
+   "name": "Samsung Galaxy Z Fold 5",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 700000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    },
+    {
+     "source": "skyy-samsung",
+     "price": 735000,
+     "sim": "phys+esim",
+     "condition": "new"
+    },
+    {
+     "source": "skyy-samsung",
+     "price": 730000,
+     "sim": "dual-sim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "z-fold-5-512",
+   "subType": "android",
+   "name": "Samsung Galaxy Z Fold 5",
+   "storage": "512GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 720000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    },
+    {
+     "source": "skyy-samsung",
+     "price": 755000,
+     "sim": "phys+esim",
+     "condition": "new"
+    }
+   ]
+  },
+  {
+   "id": "z-fold-6-256",
+   "subType": "android",
+   "name": "Samsung Galaxy Z Fold 6",
+   "storage": "256GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 965000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  },
+  {
+   "id": "z-fold-6-512",
+   "subType": "android",
+   "name": "Samsung Galaxy Z Fold 6",
+   "storage": "512GB",
+   "quotes": [
+    {
+     "source": "skyy-samsung",
+     "price": 1000000,
+     "sim": "phys+esim",
+     "condition": "uk-used"
+    }
+   ]
+  }
+ ]
+}

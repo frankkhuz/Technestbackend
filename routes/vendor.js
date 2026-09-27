@@ -11,6 +11,16 @@ const { verifyCsrfToken } = require("../middleware/csrf");
 const { sendSuccess, sendError } = require("../utils/response");
 const router = express.Router();
 
+/**
+ * @swagger
+ * /api/vendor/upgrade:
+ *   patch:
+ *     summary: Turn the current user account into a vendor account (also at /api/vendors/upgrade)
+ *     tags: [Vendor]
+ *     responses:
+ *       200:
+ *         description: Account upgraded to vendor
+ */
 router.patch("/upgrade", protect, async (req, res, next) => {
   try {
     if (req.user.userType === "admin")
@@ -40,6 +50,28 @@ router.patch("/upgrade", protect, async (req, res, next) => {
 // which let any vendor self-approve. It now only submits the vendor
 // profile for review. An admin must approve via /api/admin/vendors/:id/approve
 // before vendorVerified becomes true.
+/**
+ * @swagger
+ * /api/vendor/verify:
+ *   patch:
+ *     summary: Submit the vendor profile for admin review (also at /api/vendors/verify)
+ *     description: Does not verify the vendor — an admin approves via /api/admin/vendors/{id}/approve. Call POST /api/auth/refresh afterwards so the token picks up vendorVerified.
+ *     tags: [Vendor]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [phone, businessRegNumber, shopAddress]
+ *             properties:
+ *               phone: { type: string }
+ *               businessRegNumber: { type: string }
+ *               shopAddress: { type: string }
+ *     responses:
+ *       200:
+ *         description: Vendor profile submitted for review
+ */
 router.patch("/verify", protect, async (req, res, next) => {
   try {
     if (req.user.userType !== "vendor")
@@ -73,6 +105,16 @@ router.patch("/verify", protect, async (req, res, next) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/vendor/dashboard:
+ *   get:
+ *     summary: Verified vendor's own listings and stats
+ *     tags: [Vendor]
+ *     responses:
+ *       200:
+ *         description: Dashboard fetched
+ */
 router.get(
   "/dashboard",
   protect,

@@ -1,0 +1,1862 @@
+{
+ "iphone": [
+  {
+   "id": "iphone-17-pro-max-512",
+   "name": "iPhone 17 Pro Max",
+   "storage": "512GB",
+   "baseMin": 1435000,
+   "baseMax": 1840000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-17-pro-max-256",
+   "name": "iPhone 17 Pro Max",
+   "storage": "256GB",
+   "baseMin": 1285000,
+   "baseMax": 1650000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-16-pro-max-256",
+   "name": "iPhone 16 Pro Max",
+   "storage": "256GB",
+   "baseMin": 975000,
+   "baseMax": 1250000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-air-512",
+   "name": "iPhone Air",
+   "storage": "512GB",
+   "baseMin": 950000,
+   "baseMax": 1220000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-air-256",
+   "name": "iPhone Air",
+   "storage": "256GB",
+   "baseMin": 875000,
+   "baseMax": 1120000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-17-256",
+   "name": "iPhone 17",
+   "storage": "256GB",
+   "baseMin": 850000,
+   "baseMax": 1090000,
+   "priceSource": "market",
+   "basis": "esim"
+  },
+  {
+   "id": "iphone-16-pro-256",
+   "name": "iPhone 16 Pro",
+   "storage": "256GB",
+   "baseMin": 840000,
+   "baseMax": 1080000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-15-pro-max-512",
+   "name": "iPhone 15 Pro Max",
+   "storage": "512GB",
+   "baseMin": 795000,
+   "baseMax": 1020000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-16-plus-256",
+   "name": "iPhone 16 Plus",
+   "storage": "256GB",
+   "baseMin": 775000,
+   "baseMax": 995000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-16-pro-128",
+   "name": "iPhone 16 Pro",
+   "storage": "128GB",
+   "baseMin": 765000,
+   "baseMax": 980000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-15-pro-max-256",
+   "name": "iPhone 15 Pro Max",
+   "storage": "256GB",
+   "baseMin": 745000,
+   "baseMax": 955000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-16-plus-128",
+   "name": "iPhone 16 Plus",
+   "storage": "128GB",
+   "baseMin": 700000,
+   "baseMax": 900000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-16-256",
+   "name": "iPhone 16",
+   "storage": "256GB",
+   "baseMin": 695000,
+   "baseMax": 890000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-15-pro-256",
+   "name": "iPhone 15 Pro",
+   "storage": "256GB",
+   "baseMin": 685000,
+   "baseMax": 880000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-14-pro-max-1tb",
+   "name": "iPhone 14 Pro Max",
+   "storage": "1TB",
+   "baseMin": 680000,
+   "baseMax": 870000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-14-pro-max-512",
+   "name": "iPhone 14 Pro Max",
+   "storage": "512GB",
+   "baseMin": 645000,
+   "baseMax": 830000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-16-128",
+   "name": "iPhone 16",
+   "storage": "128GB",
+   "baseMin": 645000,
+   "baseMax": 825000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-15-pro-128",
+   "name": "iPhone 15 Pro",
+   "storage": "128GB",
+   "baseMin": 640000,
+   "baseMax": 820000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-14-pro-max-256",
+   "name": "iPhone 14 Pro Max",
+   "storage": "256GB",
+   "baseMin": 630000,
+   "baseMax": 810000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-15-plus-512",
+   "name": "iPhone 15 Plus",
+   "storage": "512GB",
+   "baseMin": 600000,
+   "baseMax": 770000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-14-pro-max-128",
+   "name": "iPhone 14 Pro Max",
+   "storage": "128GB",
+   "baseMin": 580000,
+   "baseMax": 745000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-14-pro-1tb",
+   "name": "iPhone 14 Pro",
+   "storage": "1TB",
+   "baseMin": 575000,
+   "baseMax": 740000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-14-pro-256",
+   "name": "iPhone 14 Pro",
+   "storage": "256GB",
+   "baseMin": 540000,
+   "baseMax": 695000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-15-plus-128",
+   "name": "iPhone 15 Plus",
+   "storage": "128GB",
+   "baseMin": 535000,
+   "baseMax": 685000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-15-256",
+   "name": "iPhone 15",
+   "storage": "256GB",
+   "baseMin": 530000,
+   "baseMax": 680000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-14-pro-128",
+   "name": "iPhone 14 Pro",
+   "storage": "128GB",
+   "baseMin": 510000,
+   "baseMax": 655000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-15-128",
+   "name": "iPhone 15",
+   "storage": "128GB",
+   "baseMin": 490000,
+   "baseMax": 625000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-16e-128",
+   "name": "iPhone 16e",
+   "storage": "128GB",
+   "baseMin": 470000,
+   "baseMax": 600000,
+   "priceSource": "market",
+   "basis": "esim"
+  },
+  {
+   "id": "iphone-14-plus-256",
+   "name": "iPhone 14 Plus",
+   "storage": "256GB",
+   "baseMin": 405000,
+   "baseMax": 520000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-13-pro-max-128",
+   "name": "iPhone 13 Pro Max",
+   "storage": "128GB",
+   "baseMin": 405000,
+   "baseMax": 520000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-13-pro-256",
+   "name": "iPhone 13 Pro",
+   "storage": "256GB",
+   "baseMin": 405000,
+   "baseMax": 520000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-14-256",
+   "name": "iPhone 14",
+   "storage": "256GB",
+   "baseMin": 395000,
+   "baseMax": 505000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-14-plus-128",
+   "name": "iPhone 14 Plus",
+   "storage": "128GB",
+   "baseMin": 385000,
+   "baseMax": 495000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-13-pro-128",
+   "name": "iPhone 13 Pro",
+   "storage": "128GB",
+   "baseMin": 370000,
+   "baseMax": 475000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-12-pro-max-512",
+   "name": "iPhone 12 Pro Max",
+   "storage": "512GB",
+   "baseMin": 365000,
+   "baseMax": 470000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-12-pro-max-256",
+   "name": "iPhone 12 Pro Max",
+   "storage": "256GB",
+   "baseMin": 355000,
+   "baseMax": 455000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-14-128",
+   "name": "iPhone 14",
+   "storage": "128GB",
+   "baseMin": 345000,
+   "baseMax": 440000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-12-pro-max-128",
+   "name": "iPhone 12 Pro Max",
+   "storage": "128GB",
+   "baseMin": 335000,
+   "baseMax": 430000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-13-512",
+   "name": "iPhone 13",
+   "storage": "512GB",
+   "baseMin": 325000,
+   "baseMax": 415000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-13-256",
+   "name": "iPhone 13",
+   "storage": "256GB",
+   "baseMin": 315000,
+   "baseMax": 405000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-13-128",
+   "name": "iPhone 13",
+   "storage": "128GB",
+   "baseMin": 290000,
+   "baseMax": 370000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-12-pro-256",
+   "name": "iPhone 12 Pro",
+   "storage": "256GB",
+   "baseMin": 285000,
+   "baseMax": 365000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-12-pro-128",
+   "name": "iPhone 12 Pro",
+   "storage": "128GB",
+   "baseMin": 270000,
+   "baseMax": 345000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-11-pro-max-512",
+   "name": "iPhone 11 Pro Max",
+   "storage": "512GB",
+   "baseMin": 265000,
+   "baseMax": 340000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-11-pro-max-256",
+   "name": "iPhone 11 Pro Max",
+   "storage": "256GB",
+   "baseMin": 250000,
+   "baseMax": 320000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-12-256",
+   "name": "iPhone 12",
+   "storage": "256GB",
+   "baseMin": 245000,
+   "baseMax": 315000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-11-pro-512",
+   "name": "iPhone 11 Pro",
+   "storage": "512GB",
+   "baseMin": 240000,
+   "baseMax": 310000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-11-pro-256",
+   "name": "iPhone 11 Pro",
+   "storage": "256GB",
+   "baseMin": 235000,
+   "baseMax": 300000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-12-128",
+   "name": "iPhone 12",
+   "storage": "128GB",
+   "baseMin": 225000,
+   "baseMax": 290000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-11-pro-max-64",
+   "name": "iPhone 11 Pro Max",
+   "storage": "64GB",
+   "baseMin": 220000,
+   "baseMax": 285000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-11-pro-64",
+   "name": "iPhone 11 Pro",
+   "storage": "64GB",
+   "baseMin": 205000,
+   "baseMax": 265000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-11-256",
+   "name": "iPhone 11",
+   "storage": "256GB",
+   "baseMin": 205000,
+   "baseMax": 265000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-12-64",
+   "name": "iPhone 12",
+   "storage": "64GB",
+   "baseMin": 205000,
+   "baseMax": 260000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-11-128",
+   "name": "iPhone 11",
+   "storage": "128GB",
+   "baseMin": 195000,
+   "baseMax": 250000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-xs-512",
+   "name": "iPhone XS",
+   "storage": "512GB",
+   "baseMin": 180000,
+   "baseMax": 230000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-xr-256",
+   "name": "iPhone XR",
+   "storage": "256GB",
+   "baseMin": 170000,
+   "baseMax": 220000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-11-64",
+   "name": "iPhone 11",
+   "storage": "64GB",
+   "baseMin": 170000,
+   "baseMax": 215000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-xr-128",
+   "name": "iPhone XR",
+   "storage": "128GB",
+   "baseMin": 165000,
+   "baseMax": 210000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-xs-256",
+   "name": "iPhone XS",
+   "storage": "256GB",
+   "baseMin": 155000,
+   "baseMax": 200000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-se-3-128",
+   "name": "iPhone SE (3rd Gen)",
+   "storage": "128GB",
+   "baseMin": 155000,
+   "baseMax": 200000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-se-2-256",
+   "name": "iPhone SE (2nd Gen)",
+   "storage": "256GB",
+   "baseMin": 155000,
+   "baseMax": 200000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-xr-64",
+   "name": "iPhone XR",
+   "storage": "64GB",
+   "baseMin": 145000,
+   "baseMax": 185000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-se-3-64",
+   "name": "iPhone SE (3rd Gen)",
+   "storage": "64GB",
+   "baseMin": 140000,
+   "baseMax": 180000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-se-2-128",
+   "name": "iPhone SE (2nd Gen)",
+   "storage": "128GB",
+   "baseMin": 140000,
+   "baseMax": 180000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "iphone-se-2-64",
+   "name": "iPhone SE (2nd Gen)",
+   "storage": "64GB",
+   "baseMin": 125000,
+   "baseMax": 160000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "other-iphone",
+   "name": "Other (type manually)",
+   "storage": "",
+   "baseMin": 0,
+   "baseMax": 0
+  }
+ ],
+ "android": [
+  {
+   "id": "s24-ultra-1tb",
+   "name": "Samsung S24 Ultra",
+   "storage": "1TB",
+   "baseMin": 1350000,
+   "baseMax": 1600000,
+   "ram": "12GB",
+   "chip": "Snapdragon 8 Gen 3",
+   "display": "6.8\" Dynamic AMOLED",
+   "priceSource": "legacy"
+  },
+  {
+   "id": "s26-ultra-512",
+   "name": "Samsung S26 Ultra",
+   "storage": "512GB",
+   "baseMin": 1125000,
+   "baseMax": 1440000,
+   "priceSource": "market",
+   "basis": "new"
+  },
+  {
+   "id": "s25-ultra-512",
+   "name": "Samsung S25 Ultra",
+   "storage": "512GB",
+   "baseMin": 950000,
+   "baseMax": 1220000,
+   "priceSource": "market",
+   "basis": "new"
+  },
+  {
+   "id": "s25-ultra-256",
+   "name": "Samsung S25 Ultra",
+   "storage": "256GB",
+   "baseMin": 850000,
+   "baseMax": 1090000,
+   "priceSource": "market",
+   "basis": "new"
+  },
+  {
+   "id": "s24-plus-512",
+   "name": "Samsung S24+",
+   "storage": "512GB",
+   "baseMin": 800000,
+   "baseMax": 1000000,
+   "ram": "12GB",
+   "chip": "Snapdragon 8 Gen 3",
+   "display": "6.7\" Dynamic AMOLED",
+   "priceSource": "legacy"
+  },
+  {
+   "id": "z-fold-6-512",
+   "name": "Samsung Galaxy Z Fold 6",
+   "storage": "512GB",
+   "baseMin": 780000,
+   "baseMax": 1000000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "s24-ultra-512",
+   "name": "Samsung S24 Ultra",
+   "storage": "512GB",
+   "baseMin": 770000,
+   "baseMax": 985000,
+   "ram": "12GB",
+   "chip": "Snapdragon 8 Gen 3",
+   "display": "6.8\" Dynamic AMOLED",
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "z-fold-6-256",
+   "name": "Samsung Galaxy Z Fold 6",
+   "storage": "256GB",
+   "baseMin": 755000,
+   "baseMax": 965000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "s24-ultra-256",
+   "name": "Samsung S24 Ultra",
+   "storage": "256GB",
+   "baseMin": 710000,
+   "baseMax": 910000,
+   "ram": "12GB",
+   "chip": "Snapdragon 8 Gen 3",
+   "display": "6.8\" Dynamic AMOLED",
+   "priceSource": "market",
+   "basis": "dual-sim"
+  },
+  {
+   "id": "z-fold-5-512",
+   "name": "Samsung Galaxy Z Fold 5",
+   "storage": "512GB",
+   "baseMin": 560000,
+   "baseMax": 720000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "s23-ultra-512",
+   "name": "Samsung S23 Ultra",
+   "storage": "512GB",
+   "baseMin": 545000,
+   "baseMax": 700000,
+   "ram": "12GB",
+   "chip": "Snapdragon 8 Gen 2",
+   "display": "6.8\" Dynamic AMOLED",
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "z-fold-5-256",
+   "name": "Samsung Galaxy Z Fold 5",
+   "storage": "256GB",
+   "baseMin": 545000,
+   "baseMax": 700000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "s23-ultra-256",
+   "name": "Samsung S23 Ultra",
+   "storage": "256GB",
+   "baseMin": 500000,
+   "baseMax": 640000,
+   "ram": "12GB",
+   "chip": "Snapdragon 8 Gen 2",
+   "display": "6.8\" Dynamic AMOLED",
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "s24-plus-256",
+   "name": "Samsung S24+",
+   "storage": "256GB",
+   "baseMin": 475000,
+   "baseMax": 610000,
+   "ram": "12GB",
+   "chip": "Snapdragon 8 Gen 3",
+   "display": "6.7\" Dynamic AMOLED",
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "z-fold-4-512",
+   "name": "Samsung Galaxy Z Fold 4",
+   "storage": "512GB",
+   "baseMin": 440000,
+   "baseMax": 565000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "s22-ultra-512",
+   "name": "Samsung S22 Ultra",
+   "storage": "512GB",
+   "baseMin": 435000,
+   "baseMax": 560000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "s24-256",
+   "name": "Samsung S24",
+   "storage": "256GB",
+   "baseMin": 430000,
+   "baseMax": 550000,
+   "ram": "8GB",
+   "chip": "Snapdragon 8 Gen 3",
+   "display": "6.2\" Dynamic AMOLED",
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "z-fold-4-256",
+   "name": "Samsung Galaxy Z Fold 4",
+   "storage": "256GB",
+   "baseMin": 430000,
+   "baseMax": 550000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "z-fold-3-512",
+   "name": "Samsung Galaxy Z Fold 3",
+   "storage": "512GB",
+   "baseMin": 420000,
+   "baseMax": 540000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "s22-ultra-256",
+   "name": "Samsung S22 Ultra",
+   "storage": "256GB",
+   "baseMin": 415000,
+   "baseMax": 530000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "z-fold-3-256",
+   "name": "Samsung Galaxy Z Fold 3",
+   "storage": "256GB",
+   "baseMin": 400000,
+   "baseMax": 515000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "s24-128",
+   "name": "Samsung S24",
+   "storage": "128GB",
+   "baseMin": 390000,
+   "baseMax": 500000,
+   "ram": "8GB",
+   "chip": "Snapdragon 8 Gen 3",
+   "display": "6.2\" Dynamic AMOLED",
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "s23-plus-512",
+   "name": "Samsung S23+",
+   "storage": "512GB",
+   "baseMin": 390000,
+   "baseMax": 500000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "z-flip-6-512",
+   "name": "Samsung Galaxy Z Flip 6",
+   "storage": "512GB",
+   "baseMin": 375000,
+   "baseMax": 480000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "s22-ultra-128",
+   "name": "Samsung S22 Ultra",
+   "storage": "128GB",
+   "baseMin": 360000,
+   "baseMax": 460000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "s23-plus-256",
+   "name": "Samsung S23+",
+   "storage": "256GB",
+   "baseMin": 360000,
+   "baseMax": 460000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "z-flip-6-256",
+   "name": "Samsung Galaxy Z Flip 6",
+   "storage": "256GB",
+   "baseMin": 360000,
+   "baseMax": 460000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "s23-256",
+   "name": "Samsung S23",
+   "storage": "256GB",
+   "baseMin": 320000,
+   "baseMax": 410000,
+   "ram": "8GB",
+   "chip": "Snapdragon 8 Gen 2",
+   "display": "6.1\" Dynamic AMOLED",
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "z-flip-5-512",
+   "name": "Samsung Galaxy Z Flip 5",
+   "storage": "512GB",
+   "baseMin": 305000,
+   "baseMax": 390000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "z-flip-5-256",
+   "name": "Samsung Galaxy Z Flip 5",
+   "storage": "256GB",
+   "baseMin": 300000,
+   "baseMax": 385000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "s21-ultra-256",
+   "name": "Samsung S21 Ultra",
+   "storage": "256GB",
+   "baseMin": 295000,
+   "baseMax": 380000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "s23-128",
+   "name": "Samsung S23",
+   "storage": "128GB",
+   "baseMin": 290000,
+   "baseMax": 370000,
+   "ram": "8GB",
+   "chip": "Snapdragon 8 Gen 2",
+   "display": "6.1\" Dynamic AMOLED",
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "note-20-ultra-256",
+   "name": "Samsung Note 20 Ultra",
+   "storage": "256GB",
+   "baseMin": 280000,
+   "baseMax": 360000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "s22-plus-256",
+   "name": "Samsung S22+",
+   "storage": "256GB",
+   "baseMin": 255000,
+   "baseMax": 330000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "s22-256",
+   "name": "Samsung S22",
+   "storage": "256GB",
+   "baseMin": 240000,
+   "baseMax": 310000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "s21-ultra-128",
+   "name": "Samsung S21 Ultra",
+   "storage": "128GB",
+   "baseMin": 240000,
+   "baseMax": 305000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "s22-plus-128",
+   "name": "Samsung S22+",
+   "storage": "128GB",
+   "baseMin": 235000,
+   "baseMax": 300000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "z-flip-4-256",
+   "name": "Samsung Galaxy Z Flip 4",
+   "storage": "256GB",
+   "baseMin": 235000,
+   "baseMax": 300000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "note-10-plus-256",
+   "name": "Samsung Note 10+",
+   "storage": "256GB",
+   "baseMin": 225000,
+   "baseMax": 290000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "s22-128",
+   "name": "Samsung S22",
+   "storage": "128GB",
+   "baseMin": 220000,
+   "baseMax": 285000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "z-flip-4-128",
+   "name": "Samsung Galaxy Z Flip 4",
+   "storage": "128GB",
+   "baseMin": 220000,
+   "baseMax": 285000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "s20-ultra-128",
+   "name": "Samsung S20 Ultra",
+   "storage": "128GB",
+   "baseMin": 215000,
+   "baseMax": 275000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "s21-plus-256",
+   "name": "Samsung S21+",
+   "storage": "256GB",
+   "baseMin": 205000,
+   "baseMax": 265000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "z-flip-3-256",
+   "name": "Samsung Galaxy Z Flip 3",
+   "storage": "256GB",
+   "baseMin": 205000,
+   "baseMax": 265000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "s21-256",
+   "name": "Samsung S21",
+   "storage": "256GB",
+   "baseMin": 200000,
+   "baseMax": 255000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "z-flip-3-128",
+   "name": "Samsung Galaxy Z Flip 3",
+   "storage": "128GB",
+   "baseMin": 200000,
+   "baseMax": 255000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "s10-plus-128",
+   "name": "Samsung S10+",
+   "storage": "128GB",
+   "baseMin": 195000,
+   "baseMax": 250000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "s21-plus-128",
+   "name": "Samsung S21+",
+   "storage": "128GB",
+   "baseMin": 195000,
+   "baseMax": 250000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "note-20-256",
+   "name": "Samsung Note 20",
+   "storage": "256GB",
+   "baseMin": 185000,
+   "baseMax": 240000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "s21-128",
+   "name": "Samsung S21",
+   "storage": "128GB",
+   "baseMin": 185000,
+   "baseMax": 235000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "s10-128",
+   "name": "Samsung S10",
+   "storage": "128GB",
+   "baseMin": 170000,
+   "baseMax": 220000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "s20-plus-128",
+   "name": "Samsung S20+",
+   "storage": "128GB",
+   "baseMin": 170000,
+   "baseMax": 220000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "s21-fe-128",
+   "name": "Samsung S21 FE",
+   "storage": "128GB",
+   "baseMin": 170000,
+   "baseMax": 220000,
+   "priceSource": "market",
+   "basis": "dual-sim"
+  },
+  {
+   "id": "note-10-256",
+   "name": "Samsung Note 10",
+   "storage": "256GB",
+   "baseMin": 170000,
+   "baseMax": 220000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "s20-128",
+   "name": "Samsung S20",
+   "storage": "128GB",
+   "baseMin": 160000,
+   "baseMax": 205000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "s10e-128",
+   "name": "Samsung S10e",
+   "storage": "128GB",
+   "baseMin": 135000,
+   "baseMax": 175000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "note-9-128",
+   "name": "Samsung Note 9",
+   "storage": "128GB",
+   "baseMin": 135000,
+   "baseMax": 175000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "s9-plus-64",
+   "name": "Samsung S9+",
+   "storage": "64GB",
+   "baseMin": 135000,
+   "baseMax": 170000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "s20-fe-128",
+   "name": "Samsung S20 FE",
+   "storage": "128GB",
+   "baseMin": 135000,
+   "baseMax": 170000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "note-8-64",
+   "name": "Samsung Note 8",
+   "storage": "64GB",
+   "baseMin": 125000,
+   "baseMax": 160000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "s8-plus-64",
+   "name": "Samsung S8+",
+   "storage": "64GB",
+   "baseMin": 115000,
+   "baseMax": 150000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "s9-64",
+   "name": "Samsung S9",
+   "storage": "64GB",
+   "baseMin": 115000,
+   "baseMax": 145000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "s8-64",
+   "name": "Samsung S8",
+   "storage": "64GB",
+   "baseMin": 105000,
+   "baseMax": 135000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "s8-active-64",
+   "name": "Samsung S8 Active",
+   "storage": "64GB",
+   "baseMin": 90000,
+   "baseMax": 115000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "pixel-10-pro-xl-256",
+   "name": "Google Pixel 10 Pro XL",
+   "storage": "256GB",
+   "baseMin": 770000,
+   "baseMax": 990000,
+   "priceSource": "market",
+   "basis": "esim"
+  },
+  {
+   "id": "pixel-10-pro-256",
+   "name": "Google Pixel 10 Pro",
+   "storage": "256GB",
+   "baseMin": 710000,
+   "baseMax": 910000,
+   "priceSource": "market",
+   "basis": "esim"
+  },
+  {
+   "id": "pixel-10-pro-128",
+   "name": "Google Pixel 10 Pro",
+   "storage": "128GB",
+   "baseMin": 675000,
+   "baseMax": 865000,
+   "priceSource": "market",
+   "basis": "esim"
+  },
+  {
+   "id": "pixel-9-pro-xl-256",
+   "name": "Google Pixel 9 Pro XL",
+   "storage": "256GB",
+   "baseMin": 560000,
+   "baseMax": 720000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "pixel-9-pro-256",
+   "name": "Google Pixel 9 Pro",
+   "storage": "256GB",
+   "baseMin": 530000,
+   "baseMax": 680000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "pixel-9-pro-xl-128",
+   "name": "Google Pixel 9 Pro XL",
+   "storage": "128GB",
+   "baseMin": 505000,
+   "baseMax": 650000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "pixel-9-pro-128",
+   "name": "Google Pixel 9 Pro",
+   "storage": "128GB",
+   "baseMin": 475000,
+   "baseMax": 610000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "pixel-9-256",
+   "name": "Google Pixel 9",
+   "storage": "256GB",
+   "baseMin": 470000,
+   "baseMax": 600000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "pixel-9-128",
+   "name": "Google Pixel 9",
+   "storage": "128GB",
+   "baseMin": 415000,
+   "baseMax": 530000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "pixel-10a-128",
+   "name": "Google Pixel 10a",
+   "storage": "128GB",
+   "baseMin": 405000,
+   "baseMax": 520000,
+   "priceSource": "market",
+   "basis": "esim"
+  },
+  {
+   "id": "pixel-8-pro-256",
+   "name": "Google Pixel 8 Pro",
+   "storage": "256GB",
+   "baseMin": 375000,
+   "baseMax": 480000,
+   "ram": "12GB",
+   "chip": "Google Tensor G3",
+   "display": "6.7\" LTPO OLED",
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "pixel-8-pro-128",
+   "name": "Google Pixel 8 Pro",
+   "storage": "128GB",
+   "baseMin": 330000,
+   "baseMax": 420000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "pixel-8-256",
+   "name": "Google Pixel 8",
+   "storage": "256GB",
+   "baseMin": 280000,
+   "baseMax": 360000,
+   "ram": "8GB",
+   "chip": "Google Tensor G3",
+   "display": "6.2\" OLED",
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "pixel-7-pro-256",
+   "name": "Google Pixel 7 Pro",
+   "storage": "256GB",
+   "baseMin": 280000,
+   "baseMax": 360000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "pixel-8-128",
+   "name": "Google Pixel 8",
+   "storage": "128GB",
+   "baseMin": 265000,
+   "baseMax": 340000,
+   "ram": "8GB",
+   "chip": "Google Tensor G3",
+   "display": "6.2\" OLED",
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "pixel-7-pro-128",
+   "name": "Google Pixel 7 Pro",
+   "storage": "128GB",
+   "baseMin": 250000,
+   "baseMax": 320000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "pixel-8a-128",
+   "name": "Google Pixel 8a",
+   "storage": "128GB",
+   "baseMin": 250000,
+   "baseMax": 320000,
+   "priceSource": "market",
+   "basis": "phys+esim"
+  },
+  {
+   "id": "tecno-camon-20-256",
+   "name": "Tecno Camon 20",
+   "storage": "256GB",
+   "baseMin": 180000,
+   "baseMax": 250000,
+   "ram": "8GB",
+   "chip": "Helio G85",
+   "display": "6.67\" AMOLED",
+   "priceSource": "legacy"
+  },
+  {
+   "id": "infinix-note-40-256",
+   "name": "Infinix Note 40",
+   "storage": "256GB",
+   "baseMin": 160000,
+   "baseMax": 230000,
+   "ram": "8GB",
+   "chip": "Helio G99",
+   "display": "6.78\" AMOLED",
+   "priceSource": "legacy"
+  },
+  {
+   "id": "tecno-camon-20-128",
+   "name": "Tecno Camon 20",
+   "storage": "128GB",
+   "baseMin": 150000,
+   "baseMax": 210000,
+   "ram": "8GB",
+   "chip": "Helio G85",
+   "display": "6.67\" AMOLED",
+   "priceSource": "legacy"
+  },
+  {
+   "id": "infinix-note-40-128",
+   "name": "Infinix Note 40",
+   "storage": "128GB",
+   "baseMin": 130000,
+   "baseMax": 190000,
+   "ram": "8GB",
+   "chip": "Helio G99",
+   "display": "6.78\" AMOLED",
+   "priceSource": "legacy"
+  },
+  {
+   "id": "other-android",
+   "name": "Other (type manually)",
+   "storage": "",
+   "baseMin": 0,
+   "baseMax": 0,
+   "ram": "",
+   "chip": "",
+   "display": ""
+  }
+ ],
+ "laptop": {
+  "macbook": [
+   {
+    "id": "mbp-m3-2tb",
+    "name": "MacBook Pro M3",
+    "storage": "2TB",
+    "baseMin": 2200000,
+    "baseMax": 2700000,
+    "ram": "36GB",
+    "chip": "Apple M3 Max",
+    "display": "16\" Liquid Retina XDR"
+   },
+   {
+    "id": "mbp-m3-1tb",
+    "name": "MacBook Pro M3",
+    "storage": "1TB",
+    "baseMin": 1800000,
+    "baseMax": 2200000,
+    "ram": "18GB",
+    "chip": "Apple M3 Pro",
+    "display": "14\" / 16\" Liquid Retina XDR"
+   },
+   {
+    "id": "mbp-m3-512",
+    "name": "MacBook Pro M3",
+    "storage": "512GB",
+    "baseMin": 1500000,
+    "baseMax": 1900000,
+    "ram": "18GB",
+    "chip": "Apple M3",
+    "display": "14\" Liquid Retina XDR"
+   },
+   {
+    "id": "mbp-m2-1tb",
+    "name": "MacBook Pro M2",
+    "storage": "1TB",
+    "baseMin": 1600000,
+    "baseMax": 2000000,
+    "ram": "32GB",
+    "chip": "Apple M2 Pro",
+    "display": "14\" / 16\" Liquid Retina XDR"
+   },
+   {
+    "id": "mbp-m2-512",
+    "name": "MacBook Pro M2",
+    "storage": "512GB",
+    "baseMin": 1300000,
+    "baseMax": 1700000,
+    "ram": "16GB",
+    "chip": "Apple M2 Pro",
+    "display": "14\" Liquid Retina XDR"
+   },
+   {
+    "id": "mba-m2-512",
+    "name": "MacBook Air M2",
+    "storage": "512GB",
+    "baseMin": 1100000,
+    "baseMax": 1450000,
+    "ram": "16GB",
+    "chip": "Apple M2",
+    "display": "13.6\" Liquid Retina"
+   },
+   {
+    "id": "mba-m2-256",
+    "name": "MacBook Air M2",
+    "storage": "256GB",
+    "baseMin": 900000,
+    "baseMax": 1200000,
+    "ram": "8GB",
+    "chip": "Apple M2",
+    "display": "13.6\" Liquid Retina"
+   },
+   {
+    "id": "mba-m1-512",
+    "name": "MacBook Air M1",
+    "storage": "512GB",
+    "baseMin": 750000,
+    "baseMax": 980000,
+    "ram": "16GB",
+    "chip": "Apple M1",
+    "display": "13.3\" Retina"
+   },
+   {
+    "id": "mba-m1-256",
+    "name": "MacBook Air M1",
+    "storage": "256GB",
+    "baseMin": 600000,
+    "baseMax": 820000,
+    "ram": "8GB",
+    "chip": "Apple M1",
+    "display": "13.3\" Retina"
+   },
+   {
+    "id": "mbp-m1-1tb",
+    "name": "MacBook Pro M1",
+    "storage": "1TB",
+    "baseMin": 1000000,
+    "baseMax": 1350000,
+    "ram": "16GB",
+    "chip": "Apple M1 Pro",
+    "display": "14\" Liquid Retina XDR"
+   },
+   {
+    "id": "mbp-m1-512",
+    "name": "MacBook Pro M1",
+    "storage": "512GB",
+    "baseMin": 850000,
+    "baseMax": 1100000,
+    "ram": "16GB",
+    "chip": "Apple M1 Pro",
+    "display": "14\" Liquid Retina XDR"
+   },
+   {
+    "id": "other-macbook",
+    "name": "Other (type manually)",
+    "storage": "",
+    "baseMin": 0,
+    "baseMax": 0,
+    "ram": "",
+    "chip": "",
+    "display": ""
+   }
+  ],
+  "windows": [
+   {
+    "id": "dell-xps-15-2tb",
+    "name": "Dell XPS 15",
+    "storage": "2TB",
+    "baseMin": 1500000,
+    "baseMax": 1900000,
+    "ram": "32GB",
+    "chip": "Intel i9 13th Gen",
+    "display": "15.6\" OLED"
+   },
+   {
+    "id": "dell-xps-15-1tb",
+    "name": "Dell XPS 15",
+    "storage": "1TB",
+    "baseMin": 1200000,
+    "baseMax": 1600000,
+    "ram": "32GB",
+    "chip": "Intel i7 13th Gen",
+    "display": "15.6\" OLED/IPS"
+   },
+   {
+    "id": "dell-xps-15-512",
+    "name": "Dell XPS 15",
+    "storage": "512GB",
+    "baseMin": 950000,
+    "baseMax": 1300000,
+    "ram": "16GB",
+    "chip": "Intel i7 13th Gen",
+    "display": "15.6\" IPS"
+   },
+   {
+    "id": "hp-spectre-1tb",
+    "name": "HP Spectre x360",
+    "storage": "1TB",
+    "baseMin": 1000000,
+    "baseMax": 1350000,
+    "ram": "32GB",
+    "chip": "Intel i7 13th Gen",
+    "display": "13.5\" OLED"
+   },
+   {
+    "id": "hp-spectre-512",
+    "name": "HP Spectre x360",
+    "storage": "512GB",
+    "baseMin": 800000,
+    "baseMax": 1100000,
+    "ram": "16GB",
+    "chip": "Intel i7 13th Gen",
+    "display": "13.5\" OLED"
+   },
+   {
+    "id": "lenovo-x1-1tb",
+    "name": "Lenovo ThinkPad X1",
+    "storage": "1TB",
+    "baseMin": 900000,
+    "baseMax": 1200000,
+    "ram": "32GB",
+    "chip": "Intel i7 12th Gen",
+    "display": "14\" IPS"
+   },
+   {
+    "id": "lenovo-x1-512",
+    "name": "Lenovo ThinkPad X1",
+    "storage": "512GB",
+    "baseMin": 700000,
+    "baseMax": 950000,
+    "ram": "16GB",
+    "chip": "Intel i7 12th Gen",
+    "display": "14\" IPS"
+   },
+   {
+    "id": "hp-elite-512",
+    "name": "HP EliteBook",
+    "storage": "512GB",
+    "baseMin": 550000,
+    "baseMax": 780000,
+    "ram": "16GB",
+    "chip": "Intel i7",
+    "display": "14\" IPS"
+   },
+   {
+    "id": "hp-elite-256",
+    "name": "HP EliteBook",
+    "storage": "256GB",
+    "baseMin": 400000,
+    "baseMax": 600000,
+    "ram": "8GB",
+    "chip": "Intel i5",
+    "display": "14\" IPS"
+   },
+   {
+    "id": "dell-lat-512",
+    "name": "Dell Latitude",
+    "storage": "512GB",
+    "baseMin": 450000,
+    "baseMax": 680000,
+    "ram": "16GB",
+    "chip": "Intel i7",
+    "display": "14\" IPS"
+   },
+   {
+    "id": "dell-lat-256",
+    "name": "Dell Latitude",
+    "storage": "256GB",
+    "baseMin": 320000,
+    "baseMax": 500000,
+    "ram": "8GB",
+    "chip": "Intel i5",
+    "display": "14\" IPS"
+   },
+   {
+    "id": "other-windows",
+    "name": "Other (type manually)",
+    "storage": "",
+    "baseMin": 0,
+    "baseMax": 0,
+    "ram": "",
+    "chip": "",
+    "display": ""
+   }
+  ],
+  "linux": [
+   {
+    "id": "thinkpad-x1-1tb",
+    "name": "ThinkPad X1 Carbon",
+    "storage": "1TB",
+    "baseMin": 850000,
+    "baseMax": 1100000,
+    "ram": "32GB",
+    "chip": "Intel i7",
+    "display": "14\" IPS"
+   },
+   {
+    "id": "thinkpad-x1-512",
+    "name": "ThinkPad X1 Carbon",
+    "storage": "512GB",
+    "baseMin": 650000,
+    "baseMax": 900000,
+    "ram": "16GB",
+    "chip": "Intel i7",
+    "display": "14\" IPS"
+   },
+   {
+    "id": "dell-xps-dev-1tb",
+    "name": "Dell XPS Developer",
+    "storage": "1TB",
+    "baseMin": 1000000,
+    "baseMax": 1350000,
+    "ram": "32GB",
+    "chip": "Intel i7",
+    "display": "13.4\" OLED"
+   },
+   {
+    "id": "dell-xps-dev-512",
+    "name": "Dell XPS Developer",
+    "storage": "512GB",
+    "baseMin": 800000,
+    "baseMax": 1050000,
+    "ram": "16GB",
+    "chip": "Intel i7",
+    "display": "13.4\" OLED"
+   },
+   {
+    "id": "other-linux",
+    "name": "Other (type manually)",
+    "storage": "",
+    "baseMin": 0,
+    "baseMax": 0,
+    "ram": "",
+    "chip": "",
+    "display": ""
+   }
+  ],
+  "gaming": [
+   {
+    "id": "asus-rog-2tb",
+    "name": "ASUS ROG Strix",
+    "storage": "2TB",
+    "baseMin": 1500000,
+    "baseMax": 2000000,
+    "ram": "32GB",
+    "chip": "Intel i9 + RTX 4080",
+    "display": "15.6\" 240Hz QHD"
+   },
+   {
+    "id": "asus-rog-1tb",
+    "name": "ASUS ROG Strix",
+    "storage": "1TB",
+    "baseMin": 1200000,
+    "baseMax": 1600000,
+    "ram": "32GB",
+    "chip": "Intel i7 + RTX 4070",
+    "display": "15.6\" 144Hz IPS"
+   },
+   {
+    "id": "asus-rog-512",
+    "name": "ASUS ROG Strix",
+    "storage": "512GB",
+    "baseMin": 1000000,
+    "baseMax": 1350000,
+    "ram": "16GB",
+    "chip": "Intel i7 + RTX 4060",
+    "display": "15.6\" 144Hz IPS"
+   },
+   {
+    "id": "msi-raider-2tb",
+    "name": "MSI Raider GE78",
+    "storage": "2TB",
+    "baseMin": 1800000,
+    "baseMax": 2400000,
+    "ram": "32GB",
+    "chip": "Intel i9 + RTX 4090",
+    "display": "17\" QHD 240Hz"
+   },
+   {
+    "id": "msi-raider-1tb",
+    "name": "MSI Raider GE78",
+    "storage": "1TB",
+    "baseMin": 1400000,
+    "baseMax": 1900000,
+    "ram": "32GB",
+    "chip": "Intel i9 + RTX 4080",
+    "display": "17\" QHD 240Hz"
+   },
+   {
+    "id": "razer-blade-1tb",
+    "name": "Razer Blade 15",
+    "storage": "1TB",
+    "baseMin": 1400000,
+    "baseMax": 1900000,
+    "ram": "32GB",
+    "chip": "Intel i7 + RTX 4070",
+    "display": "15.6\" QHD 240Hz"
+   },
+   {
+    "id": "razer-blade-512",
+    "name": "Razer Blade 15",
+    "storage": "512GB",
+    "baseMin": 1150000,
+    "baseMax": 1550000,
+    "ram": "16GB",
+    "chip": "Intel i7 + RTX 4060",
+    "display": "15.6\" FHD 165Hz"
+   },
+   {
+    "id": "legion-1tb",
+    "name": "Lenovo Legion 5",
+    "storage": "1TB",
+    "baseMin": 1000000,
+    "baseMax": 1400000,
+    "ram": "32GB",
+    "chip": "AMD Ryzen 7 + RTX 4070",
+    "display": "15.6\" QHD 165Hz"
+   },
+   {
+    "id": "legion-512",
+    "name": "Lenovo Legion 5",
+    "storage": "512GB",
+    "baseMin": 800000,
+    "baseMax": 1100000,
+    "ram": "16GB",
+    "chip": "AMD Ryzen 7 + RTX 4060",
+    "display": "15.6\" FHD 144Hz"
+   },
+   {
+    "id": "hp-omen-1tb",
+    "name": "HP Omen 16",
+    "storage": "1TB",
+    "baseMin": 950000,
+    "baseMax": 1300000,
+    "ram": "32GB",
+    "chip": "Intel i7 + RTX 4070",
+    "display": "16.1\" QHD 165Hz"
+   },
+   {
+    "id": "hp-omen-512",
+    "name": "HP Omen 16",
+    "storage": "512GB",
+    "baseMin": 750000,
+    "baseMax": 1050000,
+    "ram": "16GB",
+    "chip": "Intel i7 + RTX 4060",
+    "display": "16.1\" FHD 144Hz"
+   },
+   {
+    "id": "other-gaming",
+    "name": "Other (type manually)",
+    "storage": "",
+    "baseMin": 0,
+    "baseMax": 0,
+    "ram": "",
+    "chip": "",
+    "display": ""
+   }
+  ]
+ },
+ "_meta": {
+  "generatedAt": "2026-09-27T16:36:57.000Z",
+  "strategy": "avg",
+  "sources": [
+   {
+    "id": "dealer-2026-08-02",
+    "name": "Dealer list — used iPhones, Pixels, Samsung",
+    "date": "2026-08-02"
+   },
+   {
+    "id": "skyy-iphones",
+    "name": "Skyygadget reseller list — UK used iPhones (physical SIM + eSIM)",
+    "date": null
+   },
+   {
+    "id": "skyy-samsung",
+    "name": "Skyygadget reseller list — UK used Samsung",
+    "date": null
+   }
+  ]
+ }
+}

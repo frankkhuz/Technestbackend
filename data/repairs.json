@@ -1,0 +1,149 @@
+[
+ {
+  "id": "screen-replacement-budget",
+  "issue": "Screen replacement (budget/aftermarket)",
+  "appliesTo": [
+   "phone"
+  ],
+  "priceMin": 15000,
+  "priceMax": 45000,
+  "note": "Works fine, may have slightly less accurate color/touch than original"
+ },
+ {
+  "id": "screen-replacement-oem",
+  "issue": "Screen replacement (OEM/original-quality)",
+  "appliesTo": [
+   "phone"
+  ],
+  "priceMin": 45000,
+  "priceMax": 180000,
+  "note": "Price scales heavily with model — flagship OLED screens cost far more than budget LCDs"
+ },
+ {
+  "id": "screen-replacement-laptop",
+  "issue": "Screen replacement (laptop)",
+  "appliesTo": [
+   "laptop"
+  ],
+  "priceMin": 35000,
+  "priceMax": 120000
+ },
+ {
+  "id": "battery-replacement-phone",
+  "issue": "Battery replacement",
+  "appliesTo": [
+   "phone"
+  ],
+  "priceMin": 12000,
+  "priceMax": 35000
+ },
+ {
+  "id": "battery-replacement-laptop",
+  "issue": "Battery replacement (laptop)",
+  "appliesTo": [
+   "laptop"
+  ],
+  "priceMin": 25000,
+  "priceMax": 60000
+ },
+ {
+  "id": "charging-port-repair",
+  "issue": "Charging port cleaning/repair",
+  "appliesTo": [
+   "phone",
+   "laptop",
+   "tablet"
+  ],
+  "priceMin": 8000,
+  "priceMax": 25000,
+  "note": "Often a simple lint/debris cleanout — ask for a free inspection first"
+ },
+ {
+  "id": "camera-repair",
+  "issue": "Camera module repair/replacement",
+  "appliesTo": [
+   "phone"
+  ],
+  "priceMin": 15000,
+  "priceMax": 50000
+ },
+ {
+  "id": "back-glass-replacement",
+  "issue": "Back glass replacement",
+  "appliesTo": [
+   "phone"
+  ],
+  "priceMin": 10000,
+  "priceMax": 30000
+ },
+ {
+  "id": "water-damage-service",
+  "issue": "Water damage diagnostic & cleaning",
+  "appliesTo": [
+   "phone",
+   "laptop",
+   "console"
+  ],
+  "priceMin": 10000,
+  "priceMax": 20000,
+  "note": "Diagnostic fee — further repair cost depends on what's actually damaged"
+ },
+ {
+  "id": "speaker-mic-repair",
+  "issue": "Speaker/microphone repair",
+  "appliesTo": [
+   "phone",
+   "laptop"
+  ],
+  "priceMin": 8000,
+  "priceMax": 25000
+ },
+ {
+  "id": "button-repair",
+  "issue": "Power/volume button repair",
+  "appliesTo": [
+   "phone",
+   "console"
+  ],
+  "priceMin": 6000,
+  "priceMax": 18000
+ },
+ {
+  "id": "hdmi-port-repair",
+  "issue": "HDMI/display port repair",
+  "appliesTo": [
+   "console"
+  ],
+  "priceMin": 15000,
+  "priceMax": 40000
+ },
+ {
+  "id": "fan-cleaning-repair",
+  "issue": "Fan cleaning / thermal repaste (overheating)",
+  "appliesTo": [
+   "laptop",
+   "console"
+  ],
+  "priceMin": 8000,
+  "priceMax": 20000
+ },
+ {
+  "id": "keyboard-repair-laptop",
+  "issue": "Keyboard repair/replacement",
+  "appliesTo": [
+   "laptop"
+  ],
+  "priceMin": 15000,
+  "priceMax": 45000
+ },
+ {
+  "id": "general-diagnostic",
+  "issue": "General diagnostic (unclear fault)",
+  "appliesTo": [
+   "any"
+  ],
+  "priceMin": 3000,
+  "priceMax": 8000,
+  "note": "Usually credited toward the repair if you go ahead"
+ }
+]

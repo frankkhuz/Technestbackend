@@ -23,6 +23,11 @@ const NotificationSchema = new mongoose.Schema(
         "offer_received",
         "bid_placed",
         "offer_accepted",
+        "swap_request",
+        "buy_request",
+        "transaction_update",
+        "order_paid",
+        "listing_sold",
       ],
       required: true,
     },
@@ -31,6 +36,16 @@ const NotificationSchema = new mongoose.Schema(
     listing: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Listing",
+      default: null,
+    },
+    transaction: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Transaction",
+      default: null,
+    },
+    order: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Order",
       default: null,
     },
     // read status is per-recipient for targeted notifications, but for

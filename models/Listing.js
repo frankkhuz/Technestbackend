@@ -48,6 +48,7 @@ const ListingSchema = new mongoose.Schema(
       default: null,
     },
     repairs: { type: [String], default: [] },
+    description: { type: String, trim: true, maxlength: 1000, default: null },
 
     // Media — Cloudinary URLs only, never raw image data. mediaCount is
     // kept separately since it also counts videos, which aren't uploaded
@@ -94,6 +95,18 @@ const ListingSchema = new mongoose.Schema(
       default: "pending_review",
     },
     rejectionReason: { type: String, maxlength: 300, default: null },
+
+    // Latest AI review for admins (optional — only when AI is available)
+    aiReview: {
+      type: {
+        summary: String,
+        recommendation: { type: String, enum: ["approve", "check", "reject"] },
+        flags: [{ _id: false, severity: String, message: String }],
+        photosMatchDevice: String,
+        at: Date,
+      },
+      default: null,
+    },
   },
   { timestamps: true }
 );
