@@ -313,7 +313,7 @@ medium = amber, info = grey).
 | DELETE | `/api/admin/prices/devices/:deviceId/quotes/:quoteId` | Remove a bad quote |
 | POST | `/api/admin/prices/parse` | `{ text }`: paste a WhatsApp price list and get `rows[]` back to review. `source` says whether AI or the free reader read it (`method: "rules"` forces the free reader) |
 | POST | `/api/admin/prices/preview` | `{ sourceName, rows }` shows the device and catalog prices before → after. **Nothing is saved** |
-| POST | `/api/admin/prices/apply` | Same body. Saves the quotes and updates valuation and catalog prices immediately |
+| POST | `/api/admin/prices/apply` | Same body. Saves the quotes and updates valuation and catalog prices immediately. It only re-prices catalog products that already exist and never creates them — fill an empty catalog with `npm run seed:products` |
 | PATCH | `/api/admin/prices/settings` | `{ strategy: avg \| min \| max, catalogMarkup: 0–100 }` |
 
 **Suggested admin "Update prices" page:**
