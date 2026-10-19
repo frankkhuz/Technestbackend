@@ -15,6 +15,8 @@ const UserSchema = new mongoose.Schema(
     isVerified: { type: Boolean, default: false },
     verificationToken: String,
     verificationTokenExpires: Date,
+    passwordResetToken: String,
+    passwordResetExpires: Date,
     vendorVerified: { type: Boolean, default: false },
     vendorProfile: {
       phone: String,
@@ -42,6 +44,18 @@ UserSchema.methods.generateVerificationToken = function () {
     .update(rawToken)
     .digest("hex");
   this.verificationTokenExpires = Date.now() + 24 * 60 * 60 * 1000;
+  return rawToken;
+};
+
+// Same scheme as verification: only the hash is stored, the raw token goes
+// in the emailed link
+UserSchema.methods.generatePasswordResetToken = function () {
+  const rawToken = crypto.randomBytes(32).toString("hex");
+  this.passwordResetToken = crypto
+    .createHash("sha256")
+    .update(rawToken)
+    .digest("hex");
+  this.passwordResetExpires = Date.now() + 60 * 60 * 1000;
   return rawToken;
 };
 

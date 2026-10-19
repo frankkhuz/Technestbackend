@@ -2,8 +2,9 @@ const express = require("express");
 const mongoose = require("mongoose");
 const Listing = require("../models/Listing");
 const Transaction = require("../models/Transaction");
-const Notification = require("../models/Notification");
-const { protect } = require("../middleware/auth");
+const { notify } = require("../utils/notify");
+const { normalizeNigerianPhone } = require("../utils/pricing");
+const { protect, requireVerified } = require("../middleware/auth");
 const { verifyCsrfToken } = require("../middleware/csrf");
 const { sendSuccess, sendError } = require("../utils/response");
 const { templateDescription } = require("../utils/listingChecks");
@@ -202,7 +203,7 @@ router.get("/:id", async (req, res, next) => {
  *       400:
  *         description: Missing required fields
  */
-router.post("/", protect, verifyCsrfToken, async (req, res, next) => {
+router.post("/", protect, requireVerified, verifyCsrfToken, async (req, res, next) => {
   try {
     const {
       userName,
@@ -245,6 +246,13 @@ router.post("/", protect, verifyCsrfToken, async (req, res, next) => {
       ? images.filter((u) => typeof u === "string").slice(0, 10)
       : [];
 
+    const phone = normalizeNigerianPhone(userPhone);
+    if (!phone)
+      return res.status(400).json({
+        success: false,
+        error: "Enter a valid Nigerian phone number, e.g. 0803 123 4567.",
+      });
+
     // Phones must come with an IMEI; other devices may include one
     if (deviceCategory === "phone" && !imei)
       return res.status(400).json({
@@ -265,7 +273,7 @@ router.post("/", protect, verifyCsrfToken, async (req, res, next) => {
 
     const listing = await Listing.create({
       userName,
-      userPhone,
+      userPhone: phone,
       deviceName,
       deviceCategory,
       subType,
@@ -462,6 +470,16 @@ router.patch("/:id", protect, verifyCsrfToken, async (req, res, next) => {
       (f) => req.body[f] !== undefined
     );
 
+    if (req.body.userPhone !== undefined) {
+      const phone = normalizeNigerianPhone(req.body.userPhone);
+      if (!phone)
+        return res.status(400).json({
+          success: false,
+          error: "Enter a valid Nigerian phone number, e.g. 0803 123 4567.",
+        });
+      req.body.userPhone = phone;
+    }
+
     for (const field of contentFields) {
       if (req.body[field] !== undefined) listing[field] = req.body[field];
     }
@@ -609,8 +627,7 @@ router.post(
         status: "accepted",
       });
 
-      await Notification.create({
-        recipientType: "specific",
+      await notify({
         recipient: bid.vendor,
         type: "offer_accepted",
         title: "Your offer was accepted",

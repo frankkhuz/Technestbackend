@@ -1,7 +1,7 @@
 const express = require("express");
 const User = require("../models/User");
 const Listing = require("../models/Listing");
-const Notification = require("../models/Notification");
+const { notify, notifyVendors } = require("../utils/notify");
 const Order = require("../models/Order");
 const Product = require("../models/Product");
 const Transaction = require("../models/Transaction");
@@ -99,6 +99,13 @@ router.patch(
       vendor.vendorVerified = true;
       await vendor.save();
 
+      await notify({
+        recipient: vendor._id,
+        type: "account_update",
+        title: "You're an approved TechNest vendor",
+        message: "Your vendor account is approved. You can now see customer requests and make offers on listings. Log out and back in if the vendor dashboard doesn't appear.",
+      });
+
       sendSuccess(res, 200, "Vendor approved", {
         id: vendor._id,
         name: vendor.name,
@@ -139,6 +146,16 @@ router.patch("/vendors/:id/reject", verifyCsrfToken, async (req, res, next) => {
     vendor.vendorVerified = false;
     vendor.vendorProfile = undefined; // clear so they must resubmit
     await vendor.save();
+
+    const reason = typeof req.body?.reason === "string" ? req.body.reason.trim() : "";
+    await notify({
+      recipient: vendor._id,
+      type: "account_update",
+      title: "Your vendor application wasn't approved",
+      message: `We couldn't approve your vendor application${
+        reason ? `: ${reason}` : "."
+      } Please check your details and submit them again.`.slice(0, 500),
+    });
 
     sendSuccess(res, 200, "Vendor rejected", {
       id: vendor._id,
@@ -232,8 +249,7 @@ router.patch(
       await listing.save();
       await learnTacFromListing(listing);
 
-      await Notification.create({
-        recipientType: "all_vendors",
+      await notifyVendors({
         type:
           listing.listingType === "swap"
             ? "new_swap_request"
@@ -245,6 +261,13 @@ router.patch(
         message: `${listing.deviceName} was just listed${
           listing.listingType === "swap" ? " for swap" : " for sale"
         }`,
+        listing: listing._id,
+      });
+      await notify({
+        recipient: listing.owner,
+        type: "listing_update",
+        title: "Your listing is live",
+        message: `Your ${listing.deviceName} is now on the TechNest marketplace. We'll tell you when vendors make offers.`,
         listing: listing._id,
       });
 
@@ -295,6 +318,16 @@ router.patch(
       listing.status = "rejected";
       listing.rejectionReason = req.body?.reason || null;
       await listing.save();
+
+      await notify({
+        recipient: listing.owner,
+        type: "listing_update",
+        title: "Your listing wasn't approved",
+        message: `Your ${listing.deviceName} listing wasn't approved${
+          listing.rejectionReason ? `: ${listing.rejectionReason}` : "."
+        } You can edit it and send it for review again.`.slice(0, 500),
+        listing: listing._id,
+      });
 
       sendSuccess(res, 200, "Listing rejected", {
         id: listing._id,
@@ -409,8 +442,7 @@ router.patch(
       await order.save();
 
       if (fulfillmentStatus === "shipped" || fulfillmentStatus === "delivered") {
-        await Notification.create({
-          recipientType: "specific",
+        await notify({
           recipient: order.buyer,
           type: "transaction_update",
           title:

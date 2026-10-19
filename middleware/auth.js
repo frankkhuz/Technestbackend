@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const { sendError } = require("../utils/response");
+const email = require("../utils/email");
 
 const protect = async (req, res, next) => {
   const token = req.cookies?.accessToken;
@@ -42,10 +43,16 @@ const restrictTo =
     next();
   };
 
+// Until an email provider is configured nobody could verify, so the check
+// stays off rather than locking every account out. Both `message` and
+// `error` are set because /api/listings errors use `error`; `code` lets the
+// frontend show a "resend link" button.
 const requireVerified = (req, res, next) => {
-  if (!req.user.isVerified)
-    return sendError(res, 403, "Please verify your email first");
-  next();
+  if (req.user.isVerified || req.user.userType === "admin" || !email.isConfigured())
+    return next();
+  const message =
+    "Please confirm your email first — check your inbox for our link, or ask for a new one.";
+  res.status(403).json({ success: false, message, error: message, code: "email_not_verified" });
 };
 
 const requireVendorVerified = (req, res, next) => {

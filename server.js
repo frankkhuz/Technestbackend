@@ -79,6 +79,11 @@ if (!process.env.PAYSTACK_SECRET_KEY) {
   );
 }
 
+if (!require("./utils/email").isConfigured()) {
+  console.warn(
+    "Email is not configured (EMAIL_PROVIDER, EMAIL_API_KEY, EMAIL_FROM) — emails are logged instead of sent, and email verification isn't enforced."
+  );
+}
 if (!process.env.ANTHROPIC_API_KEY) {
   console.warn(
     "ANTHROPIC_API_KEY is not set — AI extras are off; every feature uses its free built-in version."

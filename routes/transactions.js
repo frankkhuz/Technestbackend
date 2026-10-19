@@ -2,8 +2,8 @@ const express = require("express");
 const mongoose = require("mongoose");
 const Transaction = require("../models/Transaction");
 const Listing = require("../models/Listing");
-const Notification = require("../models/Notification");
-const { protect } = require("../middleware/auth");
+const { notify: notifyUsers } = require("../utils/notify");
+const { protect, requireVerified } = require("../middleware/auth");
 const { verifyCsrfToken } = require("../middleware/csrf");
 const { sendSuccess, sendError } = require("../utils/response");
 const { calculateValuation, pickCondition } = require("../utils/valuation");
@@ -17,8 +17,7 @@ const isParty = (txn, user) =>
   txn.seller.toString() === user._id.toString();
 
 const notify = (recipient, title, message, txn) =>
-  Notification.create({
-    recipientType: "specific",
+  notifyUsers({
     recipient,
     type: "transaction_update",
     title,
@@ -207,7 +206,7 @@ const buildSwapQuote = (listing, offeredDevice) => {
  *       409:
  *         description: Listing no longer available
  */
-router.post("/", verifyCsrfToken, async (req, res, next) => {
+router.post("/", requireVerified, verifyCsrfToken, async (req, res, next) => {
   try {
     const { type, listingId, offeredDevice } = req.body;
     if (!["swap", "buy"].includes(type))
@@ -261,8 +260,7 @@ router.post("/", verifyCsrfToken, async (req, res, next) => {
       message,
     });
 
-    await Notification.create({
-      recipientType: "specific",
+    await notifyUsers({
       recipient: listing.owner._id,
       type: type === "swap" ? "swap_request" : "buy_request",
       title: type === "swap" ? "New swap offer" : "Someone wants to buy",
@@ -423,9 +421,8 @@ router.patch("/:id", verifyCsrfToken, async (req, res, next) => {
         { _id: { $in: others.map((o) => o._id) } },
         { status: "cancelled" }
       );
-      await Notification.insertMany(
+      await notifyUsers(
         others.map((o) => ({
-          recipientType: "specific",
           recipient: o.buyer,
           type: "transaction_update",
           title: "Listing no longer available",

@@ -29,10 +29,21 @@ const NIGERIA_PHONE_REGEX = /^(?:\+234|0)[789][01]\d{8}$/;
 const isValidNigerianPhone = (value) =>
   typeof value === "string" && NIGERIA_PHONE_REGEX.test(value.trim());
 
+// Accepts what people actually type — "0803 123 4567", "+234-803-123-4567",
+// "2348031234567" — and returns one stored form, "+2348031234567", or null
+// when it isn't a Nigerian mobile number.
+const normalizeNigerianPhone = (value) => {
+  if (typeof value !== "string") return null;
+  let digits = value.replace(/[^\d+]/g, "");
+  if (/^\+?234\d{10}$/.test(digits)) digits = `0${digits.replace(/^\+?234/, "")}`;
+  return NIGERIA_PHONE_REGEX.test(digits) ? `+234${digits.slice(1)}` : null;
+};
+
 module.exports = {
   PLATFORM_FEE_PERCENT,
   estimatePaystackFee,
   computeListingCheckout,
   midpoint,
   isValidNigerianPhone,
+  normalizeNigerianPhone,
 };

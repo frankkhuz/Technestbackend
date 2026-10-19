@@ -442,6 +442,40 @@ the IMEI belongs to `device.brand device.model`.
 A pending report already blocks the IMEI from being listed; an admin then
 confirms or rejects it.
 
+## 14. Email verification, password reset and email notifications
+
+New accounts get a "Confirm your email" link. Until they click it, these
+return **`403` with `code: "email_not_verified"`**: creating a listing, a
+buy/swap request, checkout, a vendor bid, the vendor application and a
+stolen-device report. The body has both `message` and `error`. When you see
+that code, show the message with a **"Resend link"** button.
+
+This check only switches on once email is configured on the backend, so
+nothing is blocked before then. Accounts created before this change start
+unverified too — they'll need "Resend link" once.
+
+| | Endpoint | Notes |
+|---|---|---|
+| — | `<CLIENT_URL>/api/auth/verify-email/<token>` | The emailed link. It goes through the `/api` rewrite to the backend, which redirects to **`/login?verified=success`** or **`/login?verified=invalid`**. Show a toast on the login page for each |
+| POST | `/api/auth/resend-verification` | Logged in. Sends a new link (max 5 per hour). Answers "already verified" if it is |
+| POST | `/api/auth/forgot-password` `{ email }` | Always answers the same, whether or not the account exists |
+| POST | `/api/auth/reset-password` `{ token, password }` | **New page needed: `/reset-password`.** The emailed link is `/reset-password?token=…`; the page asks for a new password (8+ characters) and sends the token from the URL. Then send the user to log in |
+
+`GET /api/me` and the login response already include `isVerified` — show a
+small "Confirm your email" banner while it's false.
+
+**Phone numbers.** Listings (`userPhone`) and the vendor application
+(`phone`) must be Nigerian mobile numbers. Any common format is accepted
+(`0803 123 4567`, `+234 803…`, `234803…`) and saved as `+2348031234567`.
+Invalid numbers get `400`.
+
+**Notifications are now emailed too**, and each person has their own copy
+(the old shared broadcasts made one vendor's "mark read" mark it read for
+everyone). Vendors get new-listing alerts in-app only, to save the free email
+quota. New `type` values: `listing_update` (your listing was approved or
+rejected, with the reason) and `account_update` (vendor application approved
+or rejected). Admins can send `{ reason }` when rejecting a vendor.
+
 ---
 
 ## Checklist
@@ -466,6 +500,9 @@ confirms or rejects it.
 - [ ] /value: send `imei` (+ optional `imeiPhoto`), stop sending `imeiVerified`, show 400/409 IMEI errors
 - [ ] "Check an IMEI" box and "Report a stolen device" page (section 13)
 - [ ] Admin: stolen reports queue and the IMEI model-code (TAC) pages
+- [ ] Handle `403 code: "email_not_verified"` with a "Resend link" button; "Confirm your email" banner while `isVerified` is false
+- [ ] Login page toasts for `?verified=success` / `?verified=invalid`; "Forgot password?" link
+- [ ] New `/reset-password` page (section 14)
 
 ## Backend setup (for whoever deploys it)
 
@@ -479,6 +516,10 @@ AI_PER_IP_LIMIT=20                           # optional: AI replies per visitor 
 SUPPORT_WHATSAPP=2348186450477               # optional: number shown by chat and repair helper
 CLIENT_URL=https://technest11.vercel.app     # Paystack redirects to CLIENT_URL/checkout/callback
 IMEI_HASH_SECRET=<random 32+ characters>     # required; set once and NEVER change it (stored IMEI hashes stop matching)
+EMAIL_PROVIDER=brevo                         # brevo or resend; leave the three EMAIL_ lines out to log emails instead
+EMAIL_API_KEY=xkeysib-...                    # from the provider's dashboard
+EMAIL_FROM=you@yourdomain.com                # Brevo: a verified sender (a Gmail works); Resend: an address on a verified domain
+EMAIL_FROM_NAME=TechNest                     # optional
 ```
 
 ```

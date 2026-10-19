@@ -9,7 +9,7 @@ const crypto = require("crypto");
 const Listing = require("../models/Listing");
 const StolenReport = require("../models/StolenReport");
 const TacDevice = require("../models/TacDevice");
-const Notification = require("../models/Notification");
+const { notify } = require("./notify");
 const { normalizeDeviceName } = require("./textParsing");
 
 // Luhn check digit for the 14-digit IMEI body: double every second digit
@@ -105,8 +105,7 @@ const recordStolenHit = async (report, context, userId) => {
   );
 
   if (shouldAlert) {
-    await Notification.create({
-      recipientType: "specific",
+    await notify({
       recipient: report.reporter,
       type: "stolen_device_alert",
       title: "Your reported device was checked",

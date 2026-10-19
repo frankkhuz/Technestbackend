@@ -1,12 +1,14 @@
 const express = require("express");
 const Listing = require("../models/Listing");
 const InventoryItem = require("../models/Inventoryitem");
-const Notification = require("../models/Notification");
 const {
   protect,
   restrictTo,
+  requireVerified,
   requireVendorVerified,
 } = require("../middleware/auth");
+const { notify } = require("../utils/notify");
+const { normalizeNigerianPhone } = require("../utils/pricing");
 const { verifyCsrfToken } = require("../middleware/csrf");
 const { sendSuccess, sendError } = require("../utils/response");
 const router = express.Router();
@@ -72,19 +74,22 @@ router.patch("/upgrade", protect, async (req, res, next) => {
  *       200:
  *         description: Vendor profile submitted for review
  */
-router.patch("/verify", protect, async (req, res, next) => {
+router.patch("/verify", protect, requireVerified, async (req, res, next) => {
   try {
     if (req.user.userType !== "vendor")
       return sendError(res, 400, "Upgrade to a vendor account first");
 
-    const { phone, businessRegNumber, shopAddress } = req.body;
+    const { businessRegNumber, shopAddress } = req.body;
 
-    if (!phone || !businessRegNumber || !shopAddress)
+    if (!req.body.phone || !businessRegNumber || !shopAddress)
       return sendError(
         res,
         400,
         "Phone, business registration number, and shop address are required"
       );
+    const phone = normalizeNigerianPhone(req.body.phone);
+    if (!phone)
+      return sendError(res, 400, "Enter a valid Nigerian phone number, e.g. 0803 123 4567.");
 
     req.user.vendorProfile = { phone, businessRegNumber, shopAddress };
     // vendorVerified intentionally left untouched here — admin approves separately
@@ -339,6 +344,7 @@ router.patch(
 router.post(
   "/bid",
   protect,
+  requireVerified,
   restrictTo("vendor"),
   requireVendorVerified,
   verifyCsrfToken,
@@ -364,8 +370,7 @@ router.post(
       // Notify the seller — only meaningful if the listing has a
       // registered owner (all current listings do, via protect on create)
       if (listing.owner) {
-        await Notification.create({
-          recipientType: "specific",
+        await notify({
           recipient: listing.owner,
           type: "bid_placed",
           title: "New offer on your listing",

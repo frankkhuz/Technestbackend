@@ -2,7 +2,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const rateLimit = require("express-rate-limit");
 const StolenReport = require("../models/StolenReport");
-const { protect, optionalAuth } = require("../middleware/auth");
+const { protect, optionalAuth, requireVerified } = require("../middleware/auth");
 const { verifyCsrfToken, verifyCsrfIfAuthenticated } = require("../middleware/csrf");
 const { sendSuccess, sendError } = require("../utils/response");
 const {
@@ -149,7 +149,7 @@ router.post(
  *       200:
  *         description: data.reports
  */
-router.post("/stolen-reports", protect, verifyCsrfToken, async (req, res, next) => {
+router.post("/stolen-reports", protect, requireVerified, verifyCsrfToken, async (req, res, next) => {
   try {
     const str = (v, max) => (typeof v === "string" ? v.trim().slice(0, max) : "");
     const brand = str(req.body.brand, 50);

@@ -1,7 +1,7 @@
 const Order = require("../models/Order");
 const Listing = require("../models/Listing");
 const Transaction = require("../models/Transaction");
-const Notification = require("../models/Notification");
+const { notify } = require("./notify");
 const paystack = require("./paystack");
 
 // Applies a Paystack verification result to an order. Called from both the
@@ -43,7 +43,6 @@ const settleOrder = async (reference) => {
 const applyPaidEffects = async (order) => {
   const notifications = [
     {
-      recipientType: "specific",
       recipient: order.buyer,
       type: "order_paid",
       title: "Payment received",
@@ -67,7 +66,6 @@ const applyPaidEffects = async (order) => {
     );
     if (order.seller) {
       notifications.push({
-        recipientType: "specific",
         recipient: order.seller,
         type: "listing_sold",
         title: "Your listing sold",
@@ -88,7 +86,6 @@ const applyPaidEffects = async (order) => {
     );
     if (txn) {
       notifications.push({
-        recipientType: "specific",
         recipient: txn.seller,
         type: "transaction_update",
         title: "Swap top-up paid",
@@ -99,7 +96,7 @@ const applyPaidEffects = async (order) => {
     }
   }
 
-  await Notification.insertMany(notifications);
+  await notify(notifications);
 };
 
 module.exports = { settleOrder };

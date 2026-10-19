@@ -1,7 +1,6 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const Listing = require("../models/Listing");
-const Notification = require("../models/Notification");
 const StolenReport = require("../models/StolenReport");
 const TacDevice = require("../models/TacDevice");
 const Transaction = require("../models/Transaction");
@@ -9,6 +8,7 @@ const { protect, restrictTo } = require("../middleware/auth");
 const { verifyCsrfToken } = require("../middleware/csrf");
 const { sendSuccess, sendError } = require("../utils/response");
 const { parseTacCsv, importTacRows, OPEN_LISTING_STATUSES } = require("../utils/imei");
+const { notify } = require("../utils/notify");
 const router = express.Router();
 
 // Every route below requires a logged-in admin
@@ -117,8 +117,7 @@ router.patch("/stolen-reports/:id", verifyCsrfToken, async (req, res, next) => {
       rejected: `couldn't be confirmed${report.reviewNotes ? `: ${report.reviewNotes}` : "."}`,
       recovered: "has been closed as recovered.",
     }[status];
-    await Notification.create({
-      recipientType: "specific",
+    await notify({
       recipient: report.reporter,
       type: "stolen_report_update",
       title: "Update on your stolen-device report",

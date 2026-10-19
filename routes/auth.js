@@ -6,7 +6,23 @@ const User = require("../models/User");
 const { protect } = require("../middleware/auth");
 const { issueCsrfToken, verifyCsrfToken } = require("../middleware/csrf");
 const { sendSuccess, sendError } = require("../utils/response");
+const {
+  sendVerificationEmail,
+  sendPasswordResetEmail,
+  clientUrl,
+} = require("../utils/email");
 const router = express.Router();
+
+// Emails cost quota and land in someone's inbox — keep resends rare
+const emailLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  handler: (req, res) =>
+    sendError(res, 429, "Too many emails requested — please try again in an hour."),
+});
+
+const hashToken = (raw) =>
+  crypto.createHash("sha256").update(String(raw)).digest("hex");
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -122,12 +138,17 @@ router.post(
       const exists = await User.findOne({ email });
       if (exists) return sendError(res, 409, "Email already in use");
 
-      const user = await User.create({
+      const user = new User({
         name,
         email,
         password,
         userType: resolvedType,
       });
+      const verifyToken = user.generateVerificationToken();
+      await user.save();
+      // Not awaited — signup shouldn't wait on the email provider; the user
+      // can always ask for another link
+      sendVerificationEmail(user, verifyToken);
 
       setAuthCookies(res, user);
 
@@ -220,9 +241,15 @@ router.post("/login", authLimiter, issueCsrfToken, async (req, res, next) => {
  *         name: token
  *         required: true
  *         schema: { type: string }
+ *     description: >
+ *       The emailed link opens this in a browser, which is redirected to
+ *       CLIENT_URL/login?verified=success (or ?verified=invalid). API clients
+ *       asking for JSON get a JSON response instead.
  *     responses:
  *       200:
  *         description: Email verified
+ *       302:
+ *         description: Browser redirected to the login page
  *       400:
  *         description: Invalid or expired verification link
  *         content:
@@ -232,25 +259,141 @@ router.post("/login", authLimiter, issueCsrfToken, async (req, res, next) => {
  */
 router.get("/verify-email/:token", async (req, res, next) => {
   try {
-    const hashedToken = crypto
-      .createHash("sha256")
-      .update(req.params.token)
-      .digest("hex");
-
     const user = await User.findOne({
-      verificationToken: hashedToken,
+      verificationToken: hashToken(req.params.token),
       verificationTokenExpires: { $gt: Date.now() },
     });
 
+    if (user) {
+      user.isVerified = true;
+      user.verificationToken = undefined;
+      user.verificationTokenExpires = undefined;
+      await user.save();
+    }
+
+    if (req.accepts(["json", "html"]) === "html")
+      return res.redirect(`${clientUrl()}/login?verified=${user ? "success" : "invalid"}`);
     if (!user)
       return sendError(res, 400, "Invalid or expired verification link");
+    sendSuccess(res, 200, "Email verified");
+  } catch (err) {
+    next(err);
+  }
+});
 
+/**
+ * @swagger
+ * /api/auth/resend-verification:
+ *   post:
+ *     summary: Email the logged-in user a fresh verification link
+ *     tags: [Auth]
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Link sent (or already verified)
+ *       429:
+ *         description: More than 5 emails requested in an hour
+ */
+router.post(
+  "/resend-verification",
+  emailLimiter,
+  protect,
+  verifyCsrfToken,
+  async (req, res, next) => {
+    try {
+      if (req.user.isVerified)
+        return sendSuccess(res, 200, "Your email is already verified");
+
+      const user = await User.findById(req.user._id);
+      const token = user.generateVerificationToken();
+      await user.save();
+      await sendVerificationEmail(user, token);
+      sendSuccess(res, 200, `We've sent a new link to ${user.email}`);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+/**
+ * @swagger
+ * /api/auth/forgot-password:
+ *   post:
+ *     summary: Email a password reset link
+ *     description: Always answers the same way, so it can't be used to find out which emails have accounts.
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email]
+ *             properties:
+ *               email: { type: string }
+ *     responses:
+ *       200:
+ *         description: Link sent if the account exists
+ */
+router.post("/forgot-password", emailLimiter, async (req, res, next) => {
+  try {
+    const email = String(req.body?.email || "").trim().toLowerCase();
+    const user = email ? await User.findOne({ email }) : null;
+    if (user) {
+      const token = user.generatePasswordResetToken();
+      await user.save();
+      sendPasswordResetEmail(user, token);
+    }
+    sendSuccess(res, 200, "If that email has an account, we've sent a reset link.");
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * @swagger
+ * /api/auth/reset-password:
+ *   post:
+ *     summary: Set a new password using the emailed reset token
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [token, password]
+ *             properties:
+ *               token: { type: string, description: The token from the reset link's ?token= }
+ *               password: { type: string, minLength: 8 }
+ *     responses:
+ *       200:
+ *         description: Password changed — log in with it
+ *       400:
+ *         description: Invalid or expired link, or password too short
+ */
+router.post("/reset-password", authLimiter, async (req, res, next) => {
+  try {
+    const { token, password } = req.body || {};
+    if (typeof password !== "string" || password.length < 8)
+      return sendError(res, 400, "Password must be at least 8 characters");
+
+    const user = await User.findOne({
+      passwordResetToken: hashToken(token),
+      passwordResetExpires: { $gt: Date.now() },
+    });
+    if (!user)
+      return sendError(res, 400, "This reset link is invalid or has expired. Ask for a new one.");
+
+    user.password = password;
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    // Opening the emailed link proves they own the address
     user.isVerified = true;
-    user.verificationToken = undefined;
-    user.verificationTokenExpires = undefined;
     await user.save();
 
-    sendSuccess(res, 200, "Email verified");
+    sendSuccess(res, 200, "Password changed — you can log in now");
   } catch (err) {
     next(err);
   }

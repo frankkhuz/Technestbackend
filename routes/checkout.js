@@ -5,7 +5,7 @@ const Listing = require("../models/Listing");
 const Order = require("../models/Order");
 const Transaction = require("../models/Transaction");
 const PayoutAccount = require("../models/PayoutAccount");
-const { protect } = require("../middleware/auth");
+const { protect, requireVerified } = require("../middleware/auth");
 const { verifyCsrfToken } = require("../middleware/csrf");
 const { sendSuccess, sendError } = require("../utils/response");
 const paystack = require("../utils/paystack");
@@ -146,6 +146,7 @@ router.get("/listing-preview", protect, async (req, res, next) => {
 router.post(
   "/initialize",
   protect,
+  requireVerified,
   verifyCsrfToken,
   requirePaystack,
   async (req, res, next) => {

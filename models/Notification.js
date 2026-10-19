@@ -31,6 +31,8 @@ const NotificationSchema = new mongoose.Schema(
         "stolen_device_alert",
         "stolen_report_update",
         "listing_removed",
+        "listing_update",
+        "account_update",
       ],
       required: true,
     },
