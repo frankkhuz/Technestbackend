@@ -398,6 +398,31 @@ section("disputes", async ({ C, db, ids, Client }) => {
   t("admin list with counts", r.json.data.disputes.length === 2 && r.json.data.counts.resolved === 2);
 });
 
+// ── Gap 8: delivery on WhatsApp orders ─────────────────────────────────────
+section("delivery", async ({ C, db, ids }) => {
+  let r = await C.buyer.req("POST", "/api/order-requests", { buyerPhone: "08035550000", state: "Lagos", deliveryAddress: "12 Allen Avenue", city: "Ikeja", items: [{ itemId: "iphone-13" }] });
+  const o = r.json.data.request;
+  const msg = decodeURIComponent(r.json.data.whatsappUrl.split("text=")[1]);
+  t("delivery details saved and in the WhatsApp message", o.delivery.method === "delivery" && o.delivery.address === "12 Allen Avenue" && msg.includes("Deliver to: 12 Allen Avenue, Ikeja, Lagos"), msg);
+  r = await C.buyer.req("POST", "/api/order-requests", { buyerPhone: "08035550000", deliveryMethod: "pickup", items: [{ itemId: "iphone-13" }] });
+  t("pickup orders", r.json.data.request.delivery.method === "pickup" && decodeURIComponent(r.json.data.whatsappUrl).includes("I'll pick it up"));
+  r = await C.buyer.req("POST", "/api/order-requests", { buyerPhone: "08035550000", items: [{ itemId: "iphone-13" }] });
+  t("no address yet → asked for on WhatsApp", decodeURIComponent(r.json.data.whatsappUrl).includes("I'll send my address here"));
+
+  r = await C.admin.req("PATCH", `/api/admin/order-requests/${o.id}`, { delivery: { status: "out_for_delivery" } });
+  t("delivery can't move before the order starts", r.status === 409);
+  r = await C.admin.req("PATCH", `/api/admin/order-requests/${o.id}`, { status: "in_progress", delivery: { fee: 3500, status: "out_for_delivery", riderName: "Musa", riderPhone: "08099990000" } });
+  t("staff set fee, rider and status", r.status === 200 && r.json.data.request.delivery.status === "out_for_delivery" && r.json.data.request.totalWithDelivery === 403500, J(r.json));
+  const note = await db.collection("notifications").findOne({ recipient: ids.buyer, message: /on its way/ });
+  t("buyer told it's on the way, with the rider", note && /Musa \(08099990000\)/.test(note.message), note?.message);
+  r = await C.admin.req("PATCH", `/api/admin/order-requests/${o.id}`, { delivery: { status: "teleported" } });
+  t("unknown delivery status → 400", r.status === 400);
+  r = await C.admin.req("PATCH", `/api/admin/order-requests/${o.id}`, { status: "completed", delivery: { status: "delivered" } });
+  t("delivered + completed together", r.json.data.request.delivery.status === "delivered" && r.json.data.request.status === "completed");
+  r = await C.buyer.req("GET", "/api/order-requests/mine");
+  t("buyer sees delivery progress", r.json.data.requests.find((x) => x.id === o.id).delivery.status === "delivered");
+});
+
 (async () => {
   const mongo = await MongoMemoryServer.create();
   const uri = mongo.getUri("technest_test");

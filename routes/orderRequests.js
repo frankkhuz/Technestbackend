@@ -31,6 +31,11 @@ const whatsappLink = (request) => {
       (i) => `• ${i.name}${i.spec ? ` (${i.spec})` : ""}${i.condition ? `, ${i.condition}` : ""} x${i.quantity} — ${naira(i.unitPrice * i.quantity)}`
     ),
     `Total: ${naira(request.amount)}`,
+    request.delivery?.method === "pickup"
+      ? "I'll pick it up"
+      : request.delivery?.address
+      ? `Deliver to: ${[request.delivery.address, request.delivery.city, request.state].filter(Boolean).join(", ")}`
+      : "Delivery — I'll send my address here",
     `Ref: ${request.reference}`,
   ];
   return `https://wa.me/${SUPPORT_WHATSAPP()}?text=${encodeURIComponent(lines.join("\n"))}`;
@@ -97,6 +102,9 @@ router.get("/options", (req, res) => {
  *               buyerEmail: { type: string }
  *               state: { type: string, example: Lagos }
  *               note: { type: string, maxLength: 500 }
+ *               deliveryMethod: { type: string, enum: [delivery, pickup], default: delivery }
+ *               deliveryAddress: { type: string, description: "Optional — without it the buyer shares it on WhatsApp" }
+ *               city: { type: string, example: Ikeja }
  *     responses:
  *       201:
  *         description: "data: { request, whatsappUrl }"
@@ -114,6 +122,9 @@ router.post("/", requestLimiter, optionalAuth, verifyCsrfIfAuthenticated, async 
     const buyerPhone = normalizeNigerianPhone(req.body.buyerPhone || "");
     const buyerEmail = String(req.body.buyerEmail || req.user?.email || "").trim() || null;
 
+    const method = req.body.deliveryMethod === "pickup" ? "pickup" : "delivery";
+    const address = String(req.body.deliveryAddress || "").trim().slice(0, 300);
+    const city = String(req.body.city || "").trim().slice(0, 60);
     if (!buyerName) return sendError(res, 400, "Tell us your name.");
     if (!buyerPhone) return sendError(res, 400, "Enter a valid Nigerian phone number, e.g. 0803 123 4567.");
     if (buyerEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(buyerEmail))
@@ -170,6 +181,7 @@ router.post("/", requestLimiter, optionalAuth, verifyCsrfIfAuthenticated, async 
       buyerEmail,
       state: normalizeState(req.body.state),
       note: typeof req.body.note === "string" ? req.body.note.slice(0, 500) : null,
+      delivery: { method, address: method === "delivery" ? address : null, city: city || null },
     });
 
     await notifyAdmins({

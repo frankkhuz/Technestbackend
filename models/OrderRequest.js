@@ -36,6 +36,23 @@ const OrderRequestSchema = new mongoose.Schema(
     state: { type: String, default: null },
     note: { type: String, trim: true, maxlength: 500, default: null },
 
+    // How the buyer gets it. Staff set the fee and move the status along;
+    // the buyer is notified at each step.
+    delivery: {
+      method: { type: String, enum: ["delivery", "pickup"], default: "delivery" },
+      address: { type: String, trim: true, maxlength: 300, default: null },
+      city: { type: String, trim: true, maxlength: 60, default: null },
+      fee: { type: Number, min: 0, default: null },
+      status: {
+        type: String,
+        enum: ["not_started", "ready_for_pickup", "out_for_delivery", "delivered", "collected"],
+        default: "not_started",
+      },
+      riderName: { type: String, trim: true, maxlength: 80, default: null },
+      riderPhone: { type: String, trim: true, maxlength: 20, default: null },
+      updatedAt: { type: Date, default: null },
+    },
+
     kind: { type: String, enum: ["cart", "listing"], required: true },
     items: {
       type: [ItemSchema],
@@ -85,6 +102,17 @@ OrderRequestSchema.methods.toClient = function () {
     buyerEmail: this.buyerEmail || undefined,
     state: this.state || undefined,
     note: this.note || undefined,
+    delivery: {
+      method: this.delivery?.method || "delivery",
+      address: this.delivery?.address || undefined,
+      city: this.delivery?.city || undefined,
+      fee: this.delivery?.fee ?? undefined,
+      status: this.delivery?.status || "not_started",
+      riderName: this.delivery?.riderName || undefined,
+      riderPhone: this.delivery?.riderPhone || undefined,
+    },
+    // Item total plus delivery, once staff have set the fee
+    totalWithDelivery: this.delivery?.fee != null ? this.amount + this.delivery.fee : undefined,
     status: this.status,
     createdAt: this.createdAt.toISOString(),
     updatedAt: this.updatedAt.toISOString(),

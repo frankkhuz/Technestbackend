@@ -14,6 +14,8 @@ const router = express.Router();
 
 router.use(protect, restrictTo("admin"));
 
+const DELIVERY_STEPS = ["not_started", "ready_for_pickup", "out_for_delivery", "delivered", "collected"];
+
 const TRANSITIONS = {
   new: ["in_progress", "cancelled"],
   in_progress: ["in_progress", "completed", "cancelled"], // in_progress again = extend the hold
@@ -105,6 +107,16 @@ router.get("/", async (req, res, next) => {
  *             properties:
  *               status: { type: string, enum: [in_progress, completed, cancelled] }
  *               adminNotes: { type: string, maxLength: 1000 }
+ *               delivery:
+ *                 type: object
+ *                 description: Any of these; the buyer is notified when status changes
+ *                 properties:
+ *                   fee: { type: number }
+ *                   status: { type: string, enum: [not_started, ready_for_pickup, out_for_delivery, delivered, collected] }
+ *                   riderName: { type: string }
+ *                   riderPhone: { type: string }
+ *                   address: { type: string }
+ *                   city: { type: string }
  *               finalPrice: { type: number, description: "completed only — what the buyer actually paid (default: the order amount)" }
  *               commission: { type: number, description: "completed only — TechNest's share (default: the whole price for cart orders, PLATFORM_FEE_PERCENT for listings). For a listing the seller is owed finalPrice − commission." }
  *     responses:
@@ -120,6 +132,27 @@ router.patch("/:id", verifyCsrfToken, async (req, res, next) => {
     if (!request) return sendError(res, 404, "Order request not found");
 
     if (typeof req.body.adminNotes === "string") request.adminNotes = req.body.adminNotes.slice(0, 1000);
+
+    // Delivery: fee, rider and progress — tell the buyer when it moves
+    const d = req.body.delivery;
+    let deliveryNews = null;
+    if (d && typeof d === "object") {
+      if (d.fee !== undefined) {
+        const fee = Number(d.fee);
+        if (!Number.isFinite(fee) || fee < 0) return sendError(res, 400, "delivery.fee must be an amount in naira.");
+        request.delivery.fee = Math.round(fee);
+      }
+      for (const f of ["riderName", "riderPhone", "address", "city"])
+        if (typeof d[f] === "string") request.delivery[f] = d[f].trim().slice(0, f === "address" ? 300 : 80) || null;
+      if (d.status !== undefined && d.status !== request.delivery.status) {
+        if (!DELIVERY_STEPS.includes(d.status)) return sendError(res, 400, `delivery.status must be one of: ${DELIVERY_STEPS.join(", ")}`);
+        if (!["in_progress", "completed"].includes(req.body.status || request.status))
+          return sendError(res, 409, "Start the order (in_progress) before updating delivery.");
+        request.delivery.status = d.status;
+        deliveryNews = d.status;
+      }
+      request.delivery.updatedAt = new Date();
+    }
     const next_ = req.body.status;
     if (next_ !== undefined && !TRANSITIONS[request.status].includes(next_))
       return sendError(res, 409, `Can't move a ${request.status} request to ${next_}.`);
@@ -208,6 +241,18 @@ router.patch("/:id", verifyCsrfToken, async (req, res, next) => {
     if (next_ === "cancelled") {
       if (request.listing) await releaseListing(request.listing, request._id);
       await buyerUpdate(`Order ${request.reference} cancelled`, request.adminNotes ? `Your order was cancelled: ${request.adminNotes}`.slice(0, 500) : "Your order was cancelled. Reach us on WhatsApp if that's a mistake.");
+    }
+
+    if (deliveryNews && request.buyer) {
+      const rider = request.delivery.riderName ? ` Rider: ${request.delivery.riderName}${request.delivery.riderPhone ? ` (${request.delivery.riderPhone})` : ""}.` : "";
+      const text = {
+        ready_for_pickup: "Your order is ready for pickup.",
+        out_for_delivery: `Your order is on its way.${rider}`,
+        delivered: "Your order was delivered. Enjoy!",
+        collected: "You've collected your order. Enjoy!",
+        not_started: "Your delivery hasn't started yet.",
+      }[deliveryNews];
+      await notify({ recipient: request.buyer, type: "order_request", title: `Order ${request.reference}`, message: text, orderRequest: request._id });
     }
 
     if (next_) {
