@@ -63,7 +63,26 @@ const ListingSchema = new mongoose.Schema(
     },
     mediaCount: { type: Number, default: 0, min: 0 },
 
+    // Set by the server after utils/imei.js screens the IMEI (valid check
+    // digit, not reported stolen, not already listed) — never by the client
     imeiVerified: { type: Boolean, default: false },
+    // Keyed hash for duplicate/stolen matching — never returned to clients
+    imeiHash: { type: String, default: null, select: false },
+    imeiLast4: { type: String, default: null },
+    imeiTac: { type: String, default: null },
+    // Photo of the *#06# screen, proving the seller has the device in hand
+    imeiPhoto: { type: String, default: null },
+    // What the TAC table says the device is, compared with deviceName.
+    // A mismatch doesn't block the listing — it's flagged for the admin.
+    imeiCheck: {
+      type: {
+        modelMatch: { type: String, enum: ["match", "mismatch", "unknown"] },
+        tacBrand: String,
+        tacModel: String,
+        checkedAt: Date,
+      },
+      default: null,
+    },
 
     estimatedMin: { type: Number, required: true, min: 0 },
     estimatedMax: { type: Number, required: true, min: 0 },
@@ -114,5 +133,13 @@ const ListingSchema = new mongoose.Schema(
 ListingSchema.index({ deviceName: "text", deviceCategory: "text" });
 ListingSchema.index({ status: 1, createdAt: -1 });
 ListingSchema.index({ owner: 1 });
+ListingSchema.index(
+  { imeiHash: 1, status: 1 },
+  { partialFilterExpression: { imeiHash: { $type: "string" } } }
+);
+ListingSchema.index(
+  { imeiTac: 1 },
+  { partialFilterExpression: { imeiTac: { $type: "string" } } }
+);
 
 module.exports = mongoose.model("Listing", ListingSchema);

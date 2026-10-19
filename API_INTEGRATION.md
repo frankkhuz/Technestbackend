@@ -145,7 +145,7 @@ UK-used prices now follow the dealer price lists. For example, the iPhone
 
 | | Endpoint | Notes |
 |---|---|---|
-| POST | `/api/listings` | Unchanged, plus an optional **`description`** field (max 1000 characters). New listings wait for admin approval (`pending_review`) |
+| POST | `/api/listings` | Optional **`description`** field (max 1000 characters). **Phones now need `imei`**, and `imeiVerified` from the client is ignored (section 13). New listings wait for admin approval (`pending_review`) |
 | POST | `/api/listings/assist` | `{ images?, fields? }` returns `data.suggestion` = `{ description, deviceId?, deviceName?, storage?, visibleIssues[], confidence? }` and `data.source`. Nothing is saved |
 | GET | `/api/listings/mine` | **Fixed** (it returned 500 before). Includes `bids[]`, each with `_id` |
 | POST | `/api/listings/:id/bids/:bidId/accept` | Seller accepts a vendor's offer and gets back `data.transaction`, an accepted deal of type `sell` |
@@ -241,8 +241,8 @@ Notes, Flips and Folds.
 - **Remove the `fetch("https://api.anthropic.com/v1/messages")` IMEI check.**
   It has no API key, so it always fails. It also asks an AI model whether an
   IMEI is stolen, which a model can't know, so it would flag honest sellers
-  at random. Keep the Luhn `validateIMEI` check. Real stolen-phone checks need
-  an IMEI blacklist service, which we can add on the backend later.
+  at random. Keep the Luhn `validateIMEI` check for instant feedback while
+  typing; the backend now does the real checks (section 13).
 
 ## 8. AI gadget recommender
 
@@ -278,7 +278,9 @@ Notes, Flips and Folds.
 ## 9. Notifications
 
 New `type` values to handle in the notification list: `swap_request`,
-`buy_request`, `transaction_update`, `order_paid`, `listing_sold`, `offer_accepted`.
+`buy_request`, `transaction_update`, `order_paid`, `listing_sold`, `offer_accepted`,
+`stolen_device_alert` (your reported device was checked or someone tried to
+list it), `stolen_report_update` (an admin confirmed/rejected your report).
 Notifications can also carry `transaction` and `order` ids, so you can link to
 them.
 
@@ -301,7 +303,24 @@ them.
 | POST | `/api/admin/listings/:id/review` | **"AI review"** button. With AI it adds a summary, flags and a photo check, saved on the listing. Without AI it returns the checks and `aiReason`. The admin still decides |
 
 Show the checks as coloured chips on each pending listing (high = red,
-medium = amber, info = grey).
+medium = amber, info = grey). New IMEI check codes: `imei_missing`,
+`imei_model_mismatch` (high — the IMEI belongs to a different model),
+`imei_model_unknown`, `no_imei_photo`. Show `imeiPhoto` next to the photos.
+
+### Stolen reports and IMEI model codes
+
+| | Endpoint | Notes |
+|---|---|---|
+| GET | `/api/admin/imei/stolen-reports?status=pending` | Reports with the reporter, the police report file and `hits[]` (each time the IMEI was checked or someone tried to list it, with who) |
+| PATCH | `/api/admin/imei/stolen-reports/:id` `{ status: confirmed \| rejected \| recovered, reviewNotes? }` | **Confirm** after checking the police extract. Confirming takes down open listings with that IMEI. The reporter is notified either way |
+| GET | `/api/admin/imei/tac?q=` | Search the model-code table by code, brand or model |
+| POST | `/api/admin/imei/tac` `{ tac, brand, model, deviceType? }` | Add or correct one code |
+| POST | `/api/admin/imei/tac/import` `{ csv }` | Paste up to ~250 lines of `tac,brand,model`. Bigger files: `npm run tac:import -- file.csv` |
+| GET | `/api/admin/imei/tac/unknown` | Codes seen on listings that aren't in the table yet — fill these in |
+| GET | `/api/admin/imei/tac/mismatches` | Codes where the seller's device name didn't match. Many on one code can mean the table entry is wrong |
+
+Approving a listing whose code is unknown saves the code as that listing's
+device name, so the table grows by itself.
 
 ### Prices (valuation base prices and the catalog's UK-used prices)
 
@@ -378,6 +397,51 @@ table.
 4. `service` and `product` are included in the matches, so there's no need to
    look them up in `app/data/repairs.ts`.
 
+## 13. IMEI checks (free, no paid service)
+
+The backend checks every phone IMEI itself: valid check digit, which model
+the number belongs to (its first 8 digits, the "TAC", looked up in our own
+table), whether it's already listed, and whether it's been reported stolen.
+The full IMEI is never stored or returned, only its last 4 digits.
+
+**Listing a phone** (`POST /api/listings`, and `PATCH` when the IMEI changes):
+
+- Send **`imei`** (required for `deviceCategory: "phone"`, optional for
+  others). 15 digits; spaces/dashes are fine, and 14-digit or 16-digit
+  (IMEISV) numbers are accepted too.
+- Optionally send **`imeiPhoto`**: the Cloudinary URL of a photo of the
+  `*#06#` screen (upload it the same way as listing photos). Ask for it —
+  admins see a flag when it's missing.
+- **Stop sending `imeiVerified`.** The server sets it.
+- Errors come back as `{ success: false, error }` with:
+  - `400` — not a valid IMEI, or a phone with no IMEI
+  - `409` — reported stolen, or already listed (by this seller or someone else)
+- The listing comes back with `imeiVerified`, `imeiLast4`, `imeiTac`,
+  `imeiPhoto` and `imeiCheck: { modelMatch: match | mismatch | unknown, tacBrand, tacModel }`.
+  Show "IMEI checked ✓ ending 1234" on the listing.
+- Editing an older phone listing that has no IMEI now requires adding one.
+
+**Public IMEI check** (a "Check an IMEI" box for buyers — free, no login):
+
+| | Endpoint | Body / returns |
+|---|---|---|
+| POST | `/api/imei/check` | `{ imei, deviceName? }` returns `data: { valid, imeiLast4, device: { brand, model } \| null, modelMatch?, reportedStolen, stolenReport: { status, policeStation, reportedAt } \| null }`. 20 checks per 15 minutes per visitor |
+
+Show a big red warning when `reportedStolen` is true ("Don't buy this
+device"). When `deviceName` is sent and `modelMatch` is `mismatch`, warn that
+the IMEI belongs to `device.brand device.model`.
+
+**Reporting a stolen device** (logged in):
+
+| | Endpoint | Body / returns |
+|---|---|---|
+| POST | `/api/imei/stolen-reports` | `{ imei, brand, model, policeStation, policeReportUrl, incidentDate?, description? }`. `policeReportUrl` is a Cloudinary upload of the police extract. Returns `data.report`. `409` if that IMEI is already reported |
+| GET | `/api/imei/stolen-reports` | The user's own reports, each with `status` (pending, confirmed, rejected, recovered) and `timesChecked` |
+| PATCH | `/api/imei/stolen-reports/:id/recovered` | Owner closes the report once the device is back |
+
+A pending report already blocks the IMEI from being listed; an admin then
+confirms or rejects it.
+
 ---
 
 ## Checklist
@@ -399,6 +463,9 @@ table.
 - [ ] Admin: check chips and "AI review" on pending listings
 - [ ] Admin: "Update prices" page (paste → read → review → preview → apply) and a devices table for manual edits
 - [ ] Admin: AI on/off switch and usage
+- [ ] /value: send `imei` (+ optional `imeiPhoto`), stop sending `imeiVerified`, show 400/409 IMEI errors
+- [ ] "Check an IMEI" box and "Report a stolen device" page (section 13)
+- [ ] Admin: stolen reports queue and the IMEI model-code (TAC) pages
 
 ## Backend setup (for whoever deploys it)
 
@@ -411,12 +478,20 @@ AI_DAILY_LIMIT=500                           # optional: max AI calls per day fo
 AI_PER_IP_LIMIT=20                           # optional: AI replies per visitor per 15 min
 SUPPORT_WHATSAPP=2348186450477               # optional: number shown by chat and repair helper
 CLIENT_URL=https://technest11.vercel.app     # Paystack redirects to CLIENT_URL/checkout/callback
+IMEI_HASH_SECRET=<random 32+ characters>     # required; set once and NEVER change it (stored IMEI hashes stop matching)
 ```
 
 ```
 npm run seed:products        # load the 94 catalog products (safe to re-run)
 npm run prices:apply -- --db # one-time: push the dealer-list prices onto catalog products
+npm run tac:import -- tac_full.csv  # one-time: load ~253k IMEI model codes (safe to re-run)
 ```
+
+`tac_full.csv` is the free public list at
+<https://github.com/MoazEb/tac-database> (download the file, then run the
+command from a machine whose `.env` has `MONGO_URI` pointing at the live
+database). It takes about 50 MB of the database. Re-run it with a newer copy
+of the file every few months to pick up new phones.
 
 Set the Paystack webhook to `<backend>/api/checkout/webhook`.
 

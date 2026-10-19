@@ -53,8 +53,17 @@ const runListingChecks = async (listing) => {
   if (!listing.images?.length) add("no_photos", "medium", "No photos uploaded.");
   else if (listing.images.length < 2) add("few_photos", "info", "Only one photo.");
 
-  if (listing.deviceCategory === "phone" && !listing.imeiVerified)
-    add("imei_not_checked", "info", "IMEI checksum wasn't verified.");
+  // imeiTac is only set once the server has screened the IMEI — older
+  // listings may have imeiVerified from the client with no IMEI on file
+  const ic = listing.imeiCheck;
+  if (listing.deviceCategory === "phone" && !listing.imeiTac)
+    add("imei_missing", "medium", "No IMEI on file — this listing predates IMEI checks.");
+  else if (ic?.modelMatch === "mismatch")
+    add("imei_model_mismatch", "high", `The IMEI belongs to a ${ic.tacBrand} ${ic.tacModel}, but the listing says ${listing.deviceName}.`);
+  else if (ic?.modelMatch === "unknown")
+    add("imei_model_unknown", "info", `IMEI model code ${listing.imeiTac} isn't in our table yet — confirm the model from the photos. Approving adds it as "${listing.deviceName}".`);
+  if (listing.imeiTac && !listing.imeiPhoto)
+    add("no_imei_photo", "info", "No photo of the *#06# screen.");
 
   const battery = Number(listing.batteryHealth);
   if (Number.isFinite(battery) && battery > 0 && battery < 80)

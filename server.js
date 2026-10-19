@@ -31,6 +31,8 @@ const supportRoutes = require("./routes/support");
 const repairTriageRoutes = require("./routes/repairTriage");
 const aiStatusRoutes = require("./routes/aiStatus");
 const adminPriceRoutes = require("./routes/adminPrices");
+const imeiRoutes = require("./routes/imei");
+const adminImeiRoutes = require("./routes/adminImei");
 const swaggerUi = require("swagger-ui-express");
 const swaggerSpec = require("./config/swagger");
 
@@ -47,6 +49,15 @@ if (
 ) {
   console.error(
     "JWT_REFRESH_SECRET is missing or too short. Set a random 32+ character string in .env"
+  );
+  process.exit(1);
+}
+
+// Keys the IMEI hashes used for duplicate/stolen matching (utils/imei.js).
+// Never change it once set — every stored IMEI hash would stop matching.
+if (!process.env.IMEI_HASH_SECRET || process.env.IMEI_HASH_SECRET.length < 32) {
+  console.error(
+    "IMEI_HASH_SECRET is missing or too short. Set a random 32+ character string in .env (and never change it afterwards)"
   );
   process.exit(1);
 }
@@ -132,6 +143,8 @@ app.use("/api/vendors", vendorRoutes);
 app.use("/api/vendor", vendorRoutes);
 app.use("/api/me", meRoutes);
 app.use("/api/admin/prices", adminPriceRoutes);
+app.use("/api/admin/imei", adminImeiRoutes);
+app.use("/api/imei", imeiRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/uploads", uploadRoutes);
 app.use("/api/notifications", notificationRoutes);

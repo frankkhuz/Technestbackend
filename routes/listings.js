@@ -9,7 +9,16 @@ const { sendSuccess, sendError } = require("../utils/response");
 const { templateDescription } = require("../utils/listingChecks");
 const { getAllDevices } = require("../utils/valuation");
 const ai = require("../utils/ai");
+const { screenListingImei, compareModel } = require("../utils/imei");
 const router = express.Router();
+
+// imeiHash is select:false, but a document we just created or assigned it
+// on still carries it — strip it before sending
+const withoutImeiHash = (listing) => {
+  const obj = listing.toObject();
+  delete obj.imeiHash;
+  return obj;
+};
 
 /**
  * @swagger
@@ -32,7 +41,8 @@ const router = express.Router();
  *         description: { type: string, maxLength: 1000 }
  *         images: { type: array, maxItems: 10, items: { type: string, description: Cloudinary secure_url } }
  *         mediaCount: { type: integer }
- *         imeiVerified: { type: boolean }
+ *         imei: { type: string, description: "Required for phones. 15 digits (14-digit and 16-digit IMEISV also accepted). Screened for a valid check digit, stolen reports and duplicate listings; only the last 4 digits are ever returned (imeiLast4). imeiVerified is set by the server." }
+ *         imeiPhoto: { type: string, description: "Cloudinary secure_url of a photo of the *#06# screen" }
  *         estimatedMin: { type: number }
  *         estimatedMax: { type: number, description: "Asking price — used as the seller price at checkout" }
  *         listingType: { type: string, enum: [sell, swap], default: sell }
@@ -207,7 +217,8 @@ router.post("/", protect, verifyCsrfToken, async (req, res, next) => {
       repairs,
       mediaCount,
       images,
-      imeiVerified,
+      imei,
+      imeiPhoto,
       estimatedMin,
       estimatedMax,
       listingType,
@@ -234,6 +245,24 @@ router.post("/", protect, verifyCsrfToken, async (req, res, next) => {
       ? images.filter((u) => typeof u === "string").slice(0, 10)
       : [];
 
+    // Phones must come with an IMEI; other devices may include one
+    if (deviceCategory === "phone" && !imei)
+      return res.status(400).json({
+        success: false,
+        error: "Add the phone's IMEI — dial *#06# on the phone to see it.",
+      });
+    let imeiFields = {};
+    if (imei) {
+      const screened = await screenListingImei({
+        imei,
+        deviceName,
+        ownerId: req.user._id,
+      });
+      if (screened.error)
+        return res.status(screened.status).json({ success: false, error: screened.error });
+      imeiFields = screened.fields;
+    }
+
     const listing = await Listing.create({
       userName,
       userPhone,
@@ -248,7 +277,8 @@ router.post("/", protect, verifyCsrfToken, async (req, res, next) => {
       description: typeof description === "string" ? description.slice(0, 1000) : null,
       mediaCount: mediaCount || 0,
       images: safeImages,
-      imeiVerified: !!imeiVerified,
+      ...imeiFields,
+      imeiPhoto: isOurImage(imeiPhoto) ? imeiPhoto : null,
       estimatedMin,
       estimatedMax,
       listingType: listingType || "sell",
@@ -259,7 +289,7 @@ router.post("/", protect, verifyCsrfToken, async (req, res, next) => {
       // approves them
     });
 
-    res.status(201).json({ success: true, data: { listing } });
+    res.status(201).json({ success: true, data: { listing: withoutImeiHash(listing) } });
   } catch (err) {
     next(err);
   }
@@ -423,21 +453,52 @@ router.patch("/:id", protect, verifyCsrfToken, async (req, res, next) => {
       "description",
       "mediaCount",
       "images",
-      "imeiVerified",
       "estimatedMin",
       "estimatedMax",
       "listingType",
       "wantedDevice",
     ];
+    const contentChanged = [...contentFields, "imei", "imeiPhoto"].some(
+      (f) => req.body[f] !== undefined
+    );
 
     for (const field of contentFields) {
       if (req.body[field] !== undefined) listing[field] = req.body[field];
     }
 
+    if (req.body.imeiPhoto !== undefined)
+      listing.imeiPhoto = isOurImage(req.body.imeiPhoto) ? req.body.imeiPhoto : null;
+
+    // A new IMEI goes through the full screen again; a renamed device only
+    // needs its model re-compared against the TAC we already have
+    if (req.body.imei !== undefined) {
+      const screened = await screenListingImei({
+        imei: req.body.imei,
+        deviceName: listing.deviceName,
+        ownerId: req.user._id,
+        listingId: listing._id,
+      });
+      if (screened.error)
+        return res.status(screened.status).json({ success: false, error: screened.error });
+      listing.set(screened.fields);
+    } else if (req.body.deviceName !== undefined && listing.imeiTac) {
+      listing.imeiCheck = {
+        ...(await compareModel(listing.imeiTac, listing.deviceName)),
+        checkedAt: new Date(),
+      };
+    }
+
+    // Older phone listings predate IMEI checks — any edit has to add one
+    if (contentChanged && listing.deviceCategory === "phone" && !listing.imeiTac)
+      return res.status(400).json({
+        success: false,
+        error: "Add the phone's IMEI — dial *#06# on the phone to see it.",
+      });
+
     // Editing listing content sends it back through moderation rather than
     // letting an owner slip changes past review on an already-approved
     // listing.
-    if (contentFields.some((f) => req.body[f] !== undefined)) {
+    if (contentChanged) {
       listing.status = "pending_review";
       listing.rejectionReason = null;
     }
@@ -456,7 +517,7 @@ router.patch("/:id", protect, verifyCsrfToken, async (req, res, next) => {
     }
 
     await listing.save();
-    res.json({ success: true, data: { listing } });
+    res.json({ success: true, data: { listing: withoutImeiHash(listing) } });
   } catch (err) {
     next(err);
   }

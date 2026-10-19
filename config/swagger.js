@@ -28,6 +28,8 @@ const options = {
       { name: "Assistants", description: "Recommender, site chat and repair helper. All work without AI (free built-in answers); AI improves them when available. Responses say which ran: source = ai | rules." },
       { name: "AI", description: "Whether AI is available right now" },
       { name: "Payouts", description: "Seller bank accounts for split payments" },
+      { name: "IMEI", description: "Free IMEI check (valid number, model, reported stolen) and stolen-device reports" },
+      { name: "Admin IMEI", description: "Review stolen-device reports; manage the IMEI model-code (TAC) table" },
       { name: "Vendor" },
       { name: "Notifications" },
       { name: "Uploads" },

@@ -7,7 +7,8 @@
     "start": "node server.js",
     "dev": "nodemon server.js",
     "seed:products": "node scripts/seedProducts.js",
-    "prices:apply": "node scripts/applyPriceLists.js"
+    "prices:apply": "node scripts/applyPriceLists.js",
+    "tac:import": "node scripts/importTac.js"
   },
   "repository": {
     "type": "git",

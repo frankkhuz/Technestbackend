@@ -8,6 +8,7 @@ const Transaction = require("../models/Transaction");
 const AiUsage = require("../models/AiUsage");
 const { runListingChecks, findMarketDevice } = require("../utils/listingChecks");
 const ai = require("../utils/ai");
+const { learnTacFromListing } = require("../utils/imei");
 const { protect, restrictTo } = require("../middleware/auth");
 const { verifyCsrfToken } = require("../middleware/csrf");
 const { sendSuccess, sendError } = require("../utils/response");
@@ -229,6 +230,7 @@ router.patch(
       listing.status = "active";
       listing.rejectionReason = null;
       await listing.save();
+      await learnTacFromListing(listing);
 
       await Notification.create({
         recipientType: "all_vendors",
@@ -594,6 +596,9 @@ Look at the listing details, the photos, the market price and the automatic chec
       description: listing.description,
       wantedDevice: listing.wantedDevice,
       imeiVerified: listing.imeiVerified,
+      imeiModelCheck: listing.imeiCheck
+        ? { result: listing.imeiCheck.modelMatch, imeiBelongsTo: listing.imeiCheck.tacModel ? `${listing.imeiCheck.tacBrand} ${listing.imeiCheck.tacModel}` : null }
+        : null,
       marketPrice: device ? device.baseMax : null,
       automaticChecks: checks,
     };
