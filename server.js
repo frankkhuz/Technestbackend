@@ -52,6 +52,7 @@ const disputeRoutes = require("./routes/disputes");
 const adminAuditRoutes = require("./routes/adminAudit");
 const { auditAdminActions } = require("./middleware/audit");
 const { requireDatabase, errorHandler } = require("./middleware/errors");
+const { alertTeam } = require("./utils/alerts");
 const mongoose = require("mongoose");
 const swaggerUi = require("swagger-ui-express");
 const swaggerSpec = require("./config/swagger");
@@ -238,8 +239,12 @@ app.use(errorHandler);
 // whole server down — log it and carry on
 process.on("unhandledRejection", (reason) => {
   console.error("Unhandled promise rejection:", reason instanceof Error ? reason.stack : reason);
+  alertTeam("Background error", "unhandled promise rejection", reason instanceof Error ? reason.stack : String(reason));
 });
-mongoose.connection.on("disconnected", () => console.error("MongoDB disconnected — answering 503 until it's back"));
+mongoose.connection.on("disconnected", () => {
+  console.error("MongoDB disconnected — answering 503 until it's back");
+  alertTeam("Database disconnected", "MongoDB connection", "The API is answering 503 until the database is reachable again.");
+});
 mongoose.connection.on("reconnected", () => console.log("MongoDB reconnected"));
 
 const PORT = process.env.PORT || 5000;

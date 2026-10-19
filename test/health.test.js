@@ -1,6 +1,7 @@
 // End-to-end test of health and downtime handling: /api/health, clear 503s
 // while the database is down (the test really stops it), webhooks asking
 // to be resent, recovery, and friendlier error responses.
+const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const { baseEnv } = require("./helpers/env");
@@ -8,6 +9,8 @@ const { spawn } = require("child_process");
 const { MongoMemoryServer } = require("mongodb-memory-server-core");
 
 const BACKEND = path.resolve(__dirname, "..");
+const EMAIL_LOG = path.join(fs.mkdtempSync(path.join(require("os").tmpdir(), "technest-test-")), "emails.jsonl");
+const alerts = () => (fs.existsSync(EMAIL_LOG) ? fs.readFileSync(EMAIL_LOG, "utf8").trim().split("\n").filter(Boolean).map(JSON.parse) : []).filter((e) => e.body.subject.startsWith("⚠️"));
 const PORT = 5108;
 let pass = 0, fail = 0;
 const t = (label, ok, extra = "") => {
@@ -34,6 +37,7 @@ const waitFor = async (check, ms) => {
     JWT_SECRET: "j".repeat(40), JWT_REFRESH_SECRET: "r".repeat(40),
     CLOUDINARY_CLOUD_NAME: "c", CLOUDINARY_API_KEY: "k", CLOUDINARY_API_SECRET: "s",
     IMEI_HASH_SECRET: "h".repeat(40), PAYSTACK_SECRET_KEY: "sk_test_x", RENDER_GIT_COMMIT: "abcdef1234567",
+    EMAIL_PROVIDER: "brevo", EMAIL_API_KEY: "k", EMAIL_FROM: "alerts@technest.test", EMAIL_LOG, ERROR_ALERT_EMAIL: "ops@t.com, cto@t.com",
   };
   const server = spawn("node", ["server.js"], { cwd: BACKEND, env });
   process.on("exit", () => server.kill());
@@ -44,7 +48,7 @@ const waitFor = async (check, ms) => {
   if (!log.includes("Server running")) { console.log(log); process.exit(1); }
 
   let r = await call("GET", "/api/health");
-  t("health: 200 ok, database connected, version, services", r.status === 200 && r.json.data.status === "ok" && r.json.data.database === "connected" && r.json.data.version === "abcdef1" && r.json.data.services.payments === true && r.json.data.services.email === false, J(r.json));
+  t("health: 200 ok, database connected, version, services", r.status === 200 && r.json.data.status === "ok" && r.json.data.database === "connected" && r.json.data.version === "abcdef1" && r.json.data.services.payments === true && r.json.data.services.email === true && r.json.data.services.whatsapp === false, J(r.json));
 
   // Friendlier errors
   r = await call("POST", "/api/auth/login", "{not json");
@@ -70,6 +74,10 @@ const waitFor = async (check, ms) => {
   t("Paystack webhook asks to be resent (503) instead of losing the payment", r.status === 503);
   r = await call("GET", "/");
   t("server itself stays up", r.status === 200);
+  for (let i = 0; i < 5; i++) await call("GET", "/api/listings");
+  await sleep(500);
+  const down = alerts().filter((e) => /Database disconnected/.test(e.body.subject));
+  t("team emailed once about the outage (not once per request)", down.length === 2 && J(down.map((e) => e.body.to[0].email).sort()) === J(["cto@t.com", "ops@t.com"]) && /version abcdef1/.test(down[0].body.textContent), J(alerts().map((e) => e.body.subject)));
 
   // Bring it back
   await mongo.start(true);

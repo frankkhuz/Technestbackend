@@ -3,6 +3,7 @@
 // { success: false, message } shape and adds a `code` the frontend can
 // act on (e.g. show a "try again" button for service_unavailable).
 const mongoose = require("mongoose");
+const { alertTeam } = require("../utils/alerts");
 
 const RETRY_SECONDS = 30;
 
@@ -40,10 +41,13 @@ const errorHandler = (err, req, res, next) => {
   if (err.message === "Not allowed by CORS") return send(403, "This website isn't allowed to use the TechNest API.", "cors");
   if (isDatabaseDown(err)) {
     console.error(`Database unavailable: ${err.message}`);
+    alertTeam("Database unreachable", `${req.method} ${req.originalUrl.split("?")[0]}`, err.message);
     return unavailable(res);
   }
 
   console.error(err.stack || err);
+  if (!err.status || err.status >= 500)
+    alertTeam("Server error", `${req.method} ${req.originalUrl.split("?")[0].replace(/[a-f0-9]{24}/gi, ":id")}`, err.stack || String(err));
   const isDev = process.env.NODE_ENV === "development";
   send(err.status || 500, isDev ? err.message : "Something went wrong on our side. Please try again.", "server_error");
 };
