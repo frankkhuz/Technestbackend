@@ -456,10 +456,10 @@ unverified too — they'll need "Resend link" once.
 
 | | Endpoint | Notes |
 |---|---|---|
-| — | `<CLIENT_URL>/api/auth/verify-email/<token>` | The emailed link. It goes through the `/api` rewrite to the backend, which redirects to **`/login?verified=success`** or **`/login?verified=invalid`**. Show a toast on the login page for each |
+| — | `<CLIENT_URL>/api/auth/verify-email/<token>` | The emailed link. It goes through the `/api` rewrite to the backend, which redirects to **`/auth/login?verified=success`** or **`/auth/login?verified=invalid`**. Show a toast on the login page for each |
 | POST | `/api/auth/resend-verification` | Logged in. Sends a new link (max 5 per hour). Answers "already verified" if it is |
 | POST | `/api/auth/forgot-password` `{ email }` | Always answers the same, whether or not the account exists |
-| POST | `/api/auth/reset-password` `{ token, password }` | **New page needed: `/reset-password`.** The emailed link is `/reset-password?token=…`; the page asks for a new password (8+ characters) and sends the token from the URL. Then send the user to log in |
+| POST | `/api/auth/reset-password` `{ token, password }` | The emailed link is `/auth/reset-password?token=…` — the existing page already reads the token and calls this endpoint |
 
 `GET /api/me` and the login response already include `isVerified` — show a
 small "Confirm your email" banner while it's false.
@@ -795,7 +795,7 @@ off. Show it on the "Update prices" page.
 - [ ] Admin: stolen reports queue and the IMEI model-code (TAC) pages
 - [ ] Handle `403 code: "email_not_verified"` with a "Resend link" button; "Confirm your email" banner while `isVerified` is false
 - [ ] Login page toasts for `?verified=success` / `?verified=invalid`; "Forgot password?" link
-- [ ] New `/reset-password` page (section 14)
+- [ ] `/auth/reset-password` and `/auth/forgot-password` already call the right endpoints — just test them
 - [ ] Checkout: "Chat with us on WhatsApp" + disabled "Pay on platform — Coming soon"; "My orders" (section 15)
 - [ ] "Reserved" badge on held listings (`isReserved`)
 - [ ] "Get verified" page with private uploads; "Verified seller" badge (section 16)

@@ -97,7 +97,7 @@ const sendVerificationEmail = (user, rawToken) =>
     heading: `Welcome to TechNest, ${user.name.split(" ")[0]}`,
     paragraphs: ["Please confirm this is your email address so you can list, buy and swap devices."],
     // Goes through the frontend's /api rewrite to the backend, which marks
-    // the account verified and redirects to the login page
+    // the account verified and redirects to the login page (/auth/login)
     button: { label: "Confirm my email", url: `${clientUrl()}/api/auth/verify-email/${rawToken}` },
     footnote: "This link expires in 24 hours. If you didn't create a TechNest account, ignore this email.",
   });
@@ -109,7 +109,7 @@ const sendPasswordResetEmail = (user, rawToken) =>
     subject: "Reset your TechNest password",
     heading: "Reset your password",
     paragraphs: ["Someone (hopefully you) asked to reset the password for this TechNest account."],
-    button: { label: "Choose a new password", url: `${clientUrl()}/reset-password?token=${rawToken}` },
+    button: { label: "Choose a new password", url: `${clientUrl()}/auth/reset-password?token=${rawToken}` },
     footnote: "This link expires in 1 hour. If you didn't ask for this, ignore this email — your password won't change.",
   });
 

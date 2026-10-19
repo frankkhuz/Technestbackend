@@ -115,9 +115,9 @@ const listing = (over = {}) => ({
   t("resend issues a new link", mail.length === 2 && newToken !== firstToken);
 
   r = await guest.req("GET", `/api/auth/verify-email/${firstToken}`, null, { Accept: "text/html" });
-  t("old link (replaced) → redirect ?verified=invalid", r.status === 302 && r.location === `${CLIENT}/login?verified=invalid`, `${r.status} ${r.location}`);
+  t("old link (replaced) → redirect ?verified=invalid", r.status === 302 && r.location === `${CLIENT}/auth/login?verified=invalid`, `${r.status} ${r.location}`);
   r = await guest.req("GET", `/api/auth/verify-email/${newToken}`, null, { Accept: "text/html,application/xhtml+xml" });
-  t("browser click → redirect ?verified=success", r.status === 302 && r.location === `${CLIENT}/login?verified=success`, `${r.status} ${r.location}`);
+  t("browser click → redirect ?verified=success", r.status === 302 && r.location === `${CLIENT}/auth/login?verified=success`, `${r.status} ${r.location}`);
   r = await guest.req("GET", `/api/auth/verify-email/${newToken}`, null, { Accept: "application/json" });
   t("API client gets JSON 400 for used link", r.status === 400 && r.json.success === false);
   r = await seller.req("GET", "/api/me");
@@ -198,7 +198,7 @@ const listing = (over = {}) => ({
   const resetMails = emails().slice(before);
   t("reset email only sent to the real account", resetMails.length === 1 && resetMails[0].body.to[0].email === "seller@t.com");
   const resetLink = linkIn(resetMails[0]);
-  t("reset link → CLIENT_URL/reset-password?token=", resetLink.startsWith(`${CLIENT}/reset-password?token=`), resetLink);
+  t("reset link → CLIENT_URL/auth/reset-password?token=", resetLink.startsWith(`${CLIENT}/auth/reset-password?token=`), resetLink);
   const resetToken = new URL(resetLink).searchParams.get("token");
   r = await guest.req("POST", "/api/auth/reset-password", { token: "nope", password: "newpassword1" });
   t("reset with wrong token → 400", r.status === 400);

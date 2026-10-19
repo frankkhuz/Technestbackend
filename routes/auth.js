@@ -243,7 +243,7 @@ router.post("/login", authLimiter, issueCsrfToken, async (req, res, next) => {
  *         schema: { type: string }
  *     description: >
  *       The emailed link opens this in a browser, which is redirected to
- *       CLIENT_URL/login?verified=success (or ?verified=invalid). API clients
+ *       CLIENT_URL/auth/login?verified=success (or ?verified=invalid). API clients
  *       asking for JSON get a JSON response instead.
  *     responses:
  *       200:
@@ -272,7 +272,7 @@ router.get("/verify-email/:token", async (req, res, next) => {
     }
 
     if (req.accepts(["json", "html"]) === "html")
-      return res.redirect(`${clientUrl()}/login?verified=${user ? "success" : "invalid"}`);
+      return res.redirect(`${clientUrl()}/auth/login?verified=${user ? "success" : "invalid"}`);
     if (!user)
       return sendError(res, 400, "Invalid or expired verification link");
     sendSuccess(res, 200, "Email verified");
