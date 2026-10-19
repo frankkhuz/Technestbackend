@@ -331,6 +331,73 @@ section("reviews", async ({ C, db, ids }) => {
   t("offers show the vendor's rating", r.json.data.request.offers[0].vendorRating?.average === 1 && r.json.data.request.offers[0].vendorRating.count === 3, J(r.json.data.request.offers));
 });
 
+// ── Gap 7: disputes ────────────────────────────────────────────────────────
+section("disputes", async ({ C, db, ids, Client }) => {
+  const oid = (x) => new ctx.mongoose.Types.ObjectId(String(x));
+  const sellViaWhatsApp = async (name) => {
+    let r = await C.seller.req("POST", "/api/listings", { userName: "S", userPhone: "08031234567", deviceName: name, deviceCategory: "laptop", subType: "windows", estimatedMin: 190000, estimatedMax: 200000, images: [] });
+    const L = r.json.data.listing._id;
+    await C.admin.req("PATCH", `/api/admin/listings/${L}/approve`);
+    r = await C.buyer.req("POST", "/api/order-requests", { buyerPhone: "08035550000", listingId: L });
+    const o = r.json.data.request;
+    await C.admin.req("PATCH", `/api/admin/order-requests/${o.id}`, { status: "in_progress" });
+    await C.admin.req("PATCH", `/api/admin/order-requests/${o.id}`, { status: "completed" });
+    return o.id;
+  };
+  const order = await sellViaWhatsApp("HP Envy x360");
+  const src = { type: "order_request", id: order };
+  let r = await C.buyer.req("POST", "/api/disputes", { source: src, reason: "broken", description: "The screen flickers badly" });
+  t("unknown reason → 400", r.status === 400);
+  r = await C.buyer.req("POST", "/api/disputes", { source: src, reason: "faulty", description: "bad" });
+  t("needs a real description", r.status === 400);
+  r = await C.other.req("POST", "/api/disputes", { source: src, reason: "faulty", description: "The screen flickers badly" });
+  t("outsiders can't dispute someone else's deal", r.status === 404);
+  r = await C.buyer.req("POST", "/api/disputes", { source: src, reason: "faulty", description: "The screen flickers badly after an hour", evidence: [`https://res.cloudinary.com/${CLOUD}/image/upload/flicker.jpg`, "https://evil.example/x.jpg"] });
+  const D = r.json?.data?.dispute;
+  t("buyer raises a dispute", r.status === 201 && /^DP-/.test(D.reference) && D.evidence.length === 1, J(r.json));
+  t("seller payout frozen", (await db.collection("orderrequests").findOne({ _id: oid(order) })).payoutStatus === "on_hold");
+  t("seller + admins notified", (await db.collection("notifications").countDocuments({ recipient: ids.seller, type: "dispute_update" })) === 1 && (await db.collection("notifications").countDocuments({ recipient: ids.admin, title: `New dispute ${D.reference}` })) === 1);
+  r = await C.admin.req("GET", "/api/admin/finance");
+  t("finance shows payouts on hold", r.json.data.outstanding.payoutsOnHold === 190000 && !r.json.data.outstanding.sellerPayouts.some((p) => p.id === order), J(r.json.data.outstanding));
+  r = await C.buyer.req("POST", "/api/disputes", { source: src, reason: "faulty", description: "The screen flickers badly" });
+  t("one open dispute per deal", r.status === 409);
+
+  r = await C.other.req("GET", `/api/disputes/${D.id}`);
+  t("outsiders can't read it", r.status === 404);
+  r = await C.seller.req("GET", `/api/disputes/${D.id}`);
+  t("seller sees it as respondent", r.json.data.dispute.yourRole === "respondent");
+  r = await C.seller.req("POST", `/api/disputes/${D.id}/messages`, { text: "It worked perfectly when I handed it over." });
+  t("seller replies; buyer notified", r.status === 201 && (await db.collection("notifications").countDocuments({ recipient: ids.buyer, type: "dispute_update" })) >= 1);
+  r = await C.admin.req("POST", `/api/disputes/${D.id}/messages`, { text: "Please both send photos." });
+  t("staff can post too", r.status === 201 && r.json.data.dispute.messages.map((m) => m.role).join() === "respondent,staff");
+  r = await C.buyer.req("GET", "/api/disputes");
+  t("listed for the buyer", r.json.data.disputes.some((d) => d.id === D.id && d.yourRole === "raiser"));
+
+  r = await C.admin.req("PATCH", `/api/disputes/admin/${D.id}`, { status: "resolved" });
+  t("resolved needs a resolution", r.status === 400);
+  r = await C.admin.req("PATCH", `/api/disputes/admin/${D.id}`, { status: "investigating" });
+  t("investigating", r.json.data.dispute.status === "investigating");
+  r = await C.admin.req("PATCH", `/api/disputes/admin/${D.id}`, { status: "resolved", resolution: "refund", refundAmount: 200000, resolutionNote: "Screen fault confirmed at inspection." });
+  t("resolved with refund → payout cancelled", r.status === 200 && (await db.collection("orderrequests").findOne({ _id: oid(order) })).payoutStatus === "cancelled", J(r.json));
+  r = await C.buyer.req("POST", `/api/disputes/${D.id}/messages`, { text: "thanks" });
+  t("closed disputes take no more messages", r.status === 409);
+  r = await C.admin.req("PATCH", `/api/disputes/admin/${D.id}`, { status: "rejected" });
+  t("can't decide twice", r.status === 409);
+
+  const order2 = await sellViaWhatsApp("Lenovo ThinkPad T14");
+  r = await C.buyer.req("POST", "/api/disputes", { source: { type: "order_request", id: order2 }, reason: "not_as_described", description: "Battery is weaker than listed" });
+  await C.admin.req("PATCH", `/api/disputes/admin/${r.json.data.dispute.id}`, { status: "resolved", resolution: "repair" });
+  t("non-refund outcome releases the payout", (await db.collection("orderrequests").findOne({ _id: oid(order2) })).payoutStatus === "pending");
+
+  await db.collection("devicerequests").updateOne({ _id: oid(ctx.completedRequest) }, { $set: { completedAt: new Date(Date.now() - 8 * 864e5) } });
+  r = await C.buyer.req("POST", "/api/disputes", { source: { type: "device_request", id: ctx.completedRequest }, reason: "faulty", description: "Stopped charging after a week" });
+  t("disputes close 7 days after completion", r.status === 409 && /7 days/.test(r.json.message));
+  r = await C.v1.req("POST", "/api/disputes", { source: { type: "device_request", id: ctx.completedRequest }, reason: "other", description: "Customer never paid the balance" });
+  t("…for both sides", r.status === 409);
+  r = await C.admin.req("GET", "/api/disputes/admin?status=resolved");
+  t("admin list with counts", r.json.data.disputes.length === 2 && r.json.data.counts.resolved === 2);
+});
+
 (async () => {
   const mongo = await MongoMemoryServer.create();
   const uri = mongo.getUri("technest_test");

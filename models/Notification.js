@@ -41,6 +41,7 @@ const NotificationSchema = new mongoose.Schema(
         "admin_alert",
         "review_request",
         "review_received",
+        "dispute_update",
       ],
       required: true,
     },

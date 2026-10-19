@@ -57,7 +57,8 @@ const OrderRequestSchema = new mongoose.Schema(
     finalPrice: { type: Number, min: 0, default: null },
     commission: { type: Number, min: 0, default: null },
     sellerPayout: { type: Number, min: 0, default: null },
-    payoutStatus: { type: String, enum: ["none", "pending", "paid"], default: "none" },
+    // on_hold while a dispute is open; cancelled if it ended in a refund
+    payoutStatus: { type: String, enum: ["none", "pending", "on_hold", "paid", "cancelled"], default: "none" },
     payoutReference: { type: String, trim: true, maxlength: 100, default: null },
     payoutPaidAt: { type: Date, default: null },
     completedAt: { type: Date, default: null },

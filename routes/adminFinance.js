@@ -41,7 +41,7 @@ const parseDay = (s, endOfDay) => {
  *         schema: { type: string, example: "2026-10-31" }
  *     responses:
  *       200:
- *         description: "data: { from, to, totals: { count, sales, revenue }, byChannel, byMonth, outstanding: { owedToSellers, owedByVendors, sellerPayouts[], vendorCommissions[] } }"
+ *         description: "data: { from, to, totals: { count, sales, revenue }, byChannel, byMonth, outstanding: { owedToSellers, owedByVendors, payoutsOnHold, sellerPayouts[], vendorCommissions[] } }"
  */
 router.get("/", async (req, res, next) => {
   try {
@@ -79,11 +79,12 @@ router.get("/", async (req, res, next) => {
     }
 
     // Outstanding, regardless of dates
-    const [payouts, dues] = await Promise.all([
+    const [payouts, dues, onHold] = await Promise.all([
       OrderRequest.find({ payoutStatus: "pending" })
         .populate({ path: "listing", select: "deviceName owner", populate: { path: "owner", select: "name email" } })
         .sort({ completedAt: 1 }),
       DeviceRequest.find({ commissionStatus: "due" }).populate("acceptedVendor", "name email vendorProfile.businessName").sort({ completedAt: 1 }),
+      OrderRequest.find({ payoutStatus: "on_hold" }).select("sellerPayout"),
     ]);
     const byVendor = new Map();
     for (const r of dues) {
@@ -107,6 +108,8 @@ router.get("/", async (req, res, next) => {
       outstanding: {
         owedToSellers: payouts.reduce((s, o) => s + (o.sellerPayout || 0), 0),
         owedByVendors: dues.reduce((s, r) => s + (r.commission || 0), 0),
+        // Payouts frozen by an open dispute
+        payoutsOnHold: onHold.reduce((s, o) => s + (o.sellerPayout || 0), 0),
         sellerPayouts: payouts.map((o) => ({
           id: String(o._id),
           reference: o.reference,
