@@ -511,6 +511,34 @@ section("privacy rights", async ({ C, db, ids, Client, emails }) => {
   t("email is free to sign up again", r.status === 201);
 });
 
+// ── Gap 11: admin activity log ─────────────────────────────────────────────
+section("audit log", async ({ C, db, ids }) => {
+  await sleep(300);
+  let r = await C.admin.req("GET", "/api/admin/audit?q=approve");
+  const approve = r.json?.data?.entries?.[0];
+  t("admin approvals were recorded automatically", approve && approve.action === "PATCH /api/admin/listings/:id/approve" && approve.actorName === "Admin Test" && /^[a-f0-9]{24}$/.test(approve.targetId), J(approve));
+  r = await C.admin.req("GET", `/api/admin/audit?targetId=${approve.targetId}`);
+  t("history of one record", r.json.data.entries.every((e) => e.targetId === approve.targetId) && r.json.data.entries.length >= 1);
+  r = await C.admin.req("GET", "/api/admin/audit?q=finance/payouts");
+  t("payouts recorded with their details", r.json.data.entries.some((e) => e.details?.reference === "GTB-TRF-001"), J(r.json.data.entries.map((e) => e.details)));
+  r = await C.admin.req("POST", "/api/products/bulk", { csv: "name,type,brand,category,priceUkUsed,priceBrandNew\nAudit Cable,gadget,Anker,cable,1000,2000", dryRun: true });
+  await sleep(300);
+  r = await C.admin.req("GET", "/api/admin/audit?q=products/bulk");
+  t("uploaded CSV contents aren't stored", r.json.data.entries[0]?.details?.csv === "[CSV, 2 lines]", J(r.json.data.entries[0]?.details));
+  const { scrub } = require(path.join(BACKEND, "middleware/audit"));
+  t("secrets scrubbed", J(scrub({ password: "x", newPassword: "y", apiKey: "z", note: "ok" })) === J({ password: "[hidden]", newPassword: "[hidden]", apiKey: "[hidden]", note: "ok" }));
+  const before = await db.collection("auditlogs").countDocuments();
+  await C.admin.req("PATCH", "/api/admin/listings/000000000000000000000000/approve");
+  await C.buyer.req("POST", "/api/order-requests", { buyerPhone: "08035550000", items: [{ itemId: "iphone-13" }] });
+  await C.admin.req("GET", "/api/admin/finance");
+  await sleep(300);
+  t("failed actions, non-admin actions and reads aren't logged", (await db.collection("auditlogs").countDocuments()) === before);
+  r = await C.buyer.req("GET", "/api/admin/audit");
+  t("audit log is admin-only", r.status === 403);
+  const idx = await db.collection("auditlogs").indexes();
+  t("entries expire after two years", idx.some((i) => i.expireAfterSeconds === 2 * 365 * 24 * 3600));
+});
+
 (async () => {
   const mongo = await MongoMemoryServer.create();
   const uri = mongo.getUri("technest_test");

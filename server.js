@@ -49,6 +49,8 @@ const healthRoutes = require("./routes/health");
 const adminFinanceRoutes = require("./routes/adminFinance");
 const reviewRoutes = require("./routes/reviews");
 const disputeRoutes = require("./routes/disputes");
+const adminAuditRoutes = require("./routes/adminAudit");
+const { auditAdminActions } = require("./middleware/audit");
 const { requireDatabase, errorHandler } = require("./middleware/errors");
 const mongoose = require("mongoose");
 const swaggerUi = require("swagger-ui-express");
@@ -176,6 +178,8 @@ app.use("/api/health", healthRoutes);
 app.use("/api/", limiter);
 // Answer straight away while the database is unreachable (docs still load)
 app.use("/api", (req, res, next) => (req.path.startsWith("/docs") ? next() : requireDatabase(req, res, next)));
+// Records every successful admin change (who, what, when) — see /api/admin/audit
+app.use("/api", auditAdminActions);
 
 app.use("/api/gadgets", gadgetRoutes);
 app.use("/api/prices", priceRoutes);
@@ -204,6 +208,7 @@ app.use("/api/admin/users", adminUserRoutes);
 app.use("/api/admin/finance", adminFinanceRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/disputes", disputeRoutes);
+app.use("/api/admin/audit", adminAuditRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/uploads", uploadRoutes);
 app.use("/api/notifications", notificationRoutes);
