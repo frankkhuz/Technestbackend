@@ -1,6 +1,7 @@
 const express = require("express");
 const Listing = require("../models/Listing");
 const User = require("../models/User");
+const DeviceRequest = require("../models/DeviceRequest");
 const InventoryItem = require("../models/Inventoryitem");
 const {
   protect,
@@ -519,6 +520,43 @@ router.post(
     }
   }
 );
+
+/**
+ * @swagger
+ * /api/vendor/commissions:
+ *   get:
+ *     summary: Approved vendor — TechNest's commission on your completed requests, owed and paid
+ *     tags: [Vendor]
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: "data: { owed, paid, requests: [{ id, reference, deviceName, finalPrice, commission, commissionStatus, completedAt }] }"
+ */
+router.get("/commissions", protect, restrictTo("vendor"), requireVendorVerified, async (req, res, next) => {
+  try {
+    const done = await DeviceRequest.find({ acceptedVendor: req.user._id, status: "completed", commissionStatus: { $ne: "none" } })
+      .select("reference deviceName finalPrice commission commissionStatus completedAt")
+      .sort({ completedAt: -1 })
+      .limit(200);
+    const total = (s) => done.filter((r) => r.commissionStatus === s).reduce((n, r) => n + r.commission, 0);
+    sendSuccess(res, 200, "Commissions fetched", {
+      owed: total("due"),
+      paid: total("collected"),
+      requests: done.map((r) => ({
+        id: String(r._id),
+        reference: r.reference,
+        deviceName: r.deviceName,
+        finalPrice: r.finalPrice,
+        commission: r.commission,
+        commissionStatus: r.commissionStatus,
+        completedAt: r.completedAt,
+      })),
+    });
+  } catch (err) {
+    next(err);
+  }
+});
 
 /**
  * @swagger

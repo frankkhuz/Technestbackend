@@ -43,6 +43,7 @@ const options = {
       { name: "Admin — Announcements", description: "Message vendors or customers in-app and by email" },
       { name: "Health", description: "Uptime check for monitors and the frontend's status banner" },
       { name: "Internal", description: "Called by a scheduler, not the frontend" },
+      { name: "Admin — Finance", description: "Sales, TechNest's earnings, seller payouts and vendor commissions" },
       { name: "Phone", description: "Verify a phone number on WhatsApp — automatic via the Cloud API, or by staff" },
       { name: "Admin — Users", description: "Find users; verify phone numbers by hand" },
       { name: "Vendor" },

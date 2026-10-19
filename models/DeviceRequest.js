@@ -76,6 +76,14 @@ const DeviceRequestSchema = new mongoose.Schema(
     acceptedAt: { type: Date, default: null },
     completedAt: { type: Date, default: null },
     adminNotes: { type: String, trim: true, maxlength: 1000, default: null },
+
+    // Set when staff complete it (utils/finance.js): the vendor owes
+    // TechNest the commission until it's marked collected
+    finalPrice: { type: Number, min: 0, default: null },
+    commission: { type: Number, min: 0, default: null },
+    commissionStatus: { type: String, enum: ["none", "due", "collected"], default: "none" },
+    commissionReference: { type: String, trim: true, maxlength: 100, default: null },
+    commissionCollectedAt: { type: Date, default: null },
   },
   { timestamps: true }
 );
@@ -84,5 +92,6 @@ DeviceRequestSchema.index({ customer: 1, createdAt: -1 });
 DeviceRequestSchema.index({ matchedVendors: 1, status: 1, createdAt: -1 });
 DeviceRequestSchema.index({ status: 1, expiresAt: 1 });
 DeviceRequestSchema.index({ acceptedVendor: 1, status: 1 });
+DeviceRequestSchema.index({ status: 1, completedAt: -1 });
 
 module.exports = mongoose.model("DeviceRequest", DeviceRequestSchema);

@@ -51,6 +51,16 @@ const OrderRequestSchema = new mongoose.Schema(
     },
     adminNotes: { type: String, trim: true, maxlength: 1000, default: null },
     handledBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+
+    // Set when staff complete the order (utils/finance.js). For a listing,
+    // TechNest owes the seller sellerPayout until it's marked paid.
+    finalPrice: { type: Number, min: 0, default: null },
+    commission: { type: Number, min: 0, default: null },
+    sellerPayout: { type: Number, min: 0, default: null },
+    payoutStatus: { type: String, enum: ["none", "pending", "paid"], default: "none" },
+    payoutReference: { type: String, trim: true, maxlength: 100, default: null },
+    payoutPaidAt: { type: Date, default: null },
+    completedAt: { type: Date, default: null },
   },
   { timestamps: true }
 );
@@ -58,6 +68,7 @@ const OrderRequestSchema = new mongoose.Schema(
 OrderRequestSchema.index({ status: 1, createdAt: -1 });
 OrderRequestSchema.index({ buyer: 1, createdAt: -1 });
 OrderRequestSchema.index({ listing: 1, status: 1 });
+OrderRequestSchema.index({ status: 1, completedAt: -1 });
 
 OrderRequestSchema.methods.toClient = function () {
   return {

@@ -7,6 +7,7 @@ const { sendSuccess, sendError } = require("../utils/response");
 const { notify } = require("../utils/notify");
 const { findMatchingVendors, settleIfExpired } = require("../utils/matching");
 const { customerView } = require("./deviceRequests");
+const { settleAmounts } = require("../utils/finance");
 const router = express.Router();
 
 router.use(protect, restrictTo("admin"));
@@ -52,6 +53,9 @@ router.get("/", async (req, res, next) => {
         customer: r.customer,
         acceptedVendor: r.acceptedVendor,
         adminNotes: fresh.adminNotes,
+        finalPrice: fresh.finalPrice ?? undefined,
+        commission: fresh.commission ?? undefined,
+        commissionStatus: fresh.commissionStatus,
       });
     }
     sendSuccess(res, 200, "Requests fetched", {
@@ -84,6 +88,8 @@ router.get("/", async (req, res, next) => {
  *             properties:
  *               status: { type: string, enum: [completed, cancelled] }
  *               adminNotes: { type: string }
+ *               finalPrice: { type: number, description: "completed only — the deal's final price (default: the accepted offer)" }
+ *               commission: { type: number, description: "completed only — what the vendor owes TechNest (default: PLATFORM_FEE_PERCENT of finalPrice)" }
  *     responses:
  *       200:
  *         description: data.request
@@ -100,6 +106,10 @@ router.patch("/:id", verifyCsrfToken, async (req, res, next) => {
     const { status } = req.body;
     if (status === "completed") {
       if (request.status !== "accepted") return sendError(res, 409, "Only accepted requests can be completed.");
+      const accepted = request.offers.id(request.acceptedOffer);
+      const amounts = settleAmounts(req.body, { defaultPrice: accepted?.price ?? 0 });
+      if (amounts.error) return sendError(res, 400, amounts.error);
+      Object.assign(request, amounts, { commissionStatus: amounts.commission > 0 ? "due" : "none" });
       request.status = "completed";
       request.completedAt = new Date();
       await notify({
@@ -124,7 +134,15 @@ router.patch("/:id", verifyCsrfToken, async (req, res, next) => {
       return sendError(res, 400, "status must be completed or cancelled");
     }
     await request.save();
-    sendSuccess(res, 200, "Request updated", { request: { ...(await customerView(request)), adminNotes: request.adminNotes } });
+    sendSuccess(res, 200, "Request updated", {
+      request: {
+        ...(await customerView(request)),
+        adminNotes: request.adminNotes,
+        finalPrice: request.finalPrice ?? undefined,
+        commission: request.commission ?? undefined,
+        commissionStatus: request.commissionStatus,
+      },
+    });
   } catch (err) {
     next(err);
   }

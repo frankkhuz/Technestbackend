@@ -113,6 +113,57 @@ section("backups", async ({ db, mongo }) => {
   t("--only + --drop replaces just that collection", r.status === 0 && /Restored 6 into users/.test(r.stdout) && !/into listings/.test(r.stdout));
 });
 
+// ── Gap 3: revenue and commission records ──────────────────────────────────
+section("revenue", async ({ C, db, ids }) => {
+  await C.admin.req("POST", "/api/products", { slug: "iphone-13", type: "phone", name: "iPhone 13", brand: "Apple", category: "flagship", priceUkUsed: 400000, priceBrandNew: 600000 });
+  let r = await C.buyer.req("POST", "/api/order-requests", { buyerPhone: "08035550000", items: [{ itemId: "iphone-13", quantity: 1 }] });
+  const cart = r.json.data.request;
+  await C.admin.req("PATCH", `/api/admin/order-requests/${cart.id}`, { status: "in_progress" });
+  r = await C.admin.req("PATCH", `/api/admin/order-requests/${cart.id}`, { status: "completed" });
+  t("cart order: whole price is TechNest's revenue by default", r.json.data.request.finalPrice === 400000 && r.json.data.request.commission === 400000 && r.json.data.request.payoutStatus === "none", J(r.json));
+
+  r = await C.buyer.req("POST", "/api/order-requests", { buyerPhone: "08035550000", listingId: ctx.laptopListing });
+  const lo = r.json.data.request;
+  await C.admin.req("PATCH", `/api/admin/order-requests/${lo.id}`, { status: "in_progress" });
+  r = await C.admin.req("PATCH", `/api/admin/order-requests/${lo.id}`, { status: "completed", finalPrice: 950000, commission: 960000 });
+  t("commission above the price → 400 (nothing changed)", r.status === 400 && (await db.collection("orderrequests").findOne({ reference: lo.reference })).status === "in_progress");
+  r = await C.admin.req("PATCH", `/api/admin/order-requests/${lo.id}`, { status: "completed", finalPrice: 950000 });
+  t("listing order: 5% commission, seller owed the rest", r.json.data.request.commission === 47500 && r.json.data.request.sellerPayout === 902500 && r.json.data.request.payoutStatus === "pending", J(r.json));
+
+  r = await C.buyer.req("POST", "/api/requests", { type: "buy", category: "phone", deviceName: "iPhone 14", state: "Lagos" });
+  const rq = r.json.data.request;
+  await C.v1.req("POST", `/api/requests/${rq.id}/offers`, { price: 500000 });
+  r = await C.buyer.req("GET", `/api/requests/${rq.id}`);
+  await C.buyer.req("POST", `/api/requests/${rq.id}/offers/${r.json.data.request.offers[0].id}/accept`);
+  r = await C.admin.req("PATCH", `/api/admin/requests/${rq.id}`, { status: "completed" });
+  t("request: accepted offer price, vendor owes 5%", r.json.data.request.finalPrice === 500000 && r.json.data.request.commission === 25000 && r.json.data.request.commissionStatus === "due", J(r.json));
+  ctx.completedRequest = rq.id;
+
+  r = await C.admin.req("GET", "/api/admin/finance");
+  const f = r.json.data;
+  t("finance totals: 3 deals, sales and revenue add up", f.totals.count === 3 && f.totals.sales === 1850000 && f.totals.revenue === 472500, J(f.totals));
+  t("by channel", f.byChannel.whatsappCatalog.revenue === 400000 && f.byChannel.whatsappListings.revenue === 47500 && f.byChannel.requests.revenue === 25000, J(f.byChannel));
+  t("outstanding: owed to seller + owed by vendor", f.outstanding.owedToSellers === 902500 && f.outstanding.sellerPayouts[0].seller.name === "Seller Test" && f.outstanding.owedByVendors === 25000 && f.outstanding.vendorCommissions[0].vendor.name === "Ade Phones", J(f.outstanding));
+  t("by month", f.byMonth.length === 1 && f.byMonth[0].count === 3);
+  r = await C.admin.req("GET", "/api/admin/finance?from=2020-01-01&to=2020-01-31");
+  t("date range filters deals (outstanding stays)", r.json.data.totals.count === 0 && r.json.data.outstanding.owedToSellers === 902500);
+  r = await C.v1.req("GET", "/api/vendor/commissions");
+  t("vendor sees what they owe", r.json.data.owed === 25000 && r.json.data.requests[0].reference === rq.reference, J(r.json));
+
+  r = await C.admin.req("PATCH", `/api/admin/finance/payouts/${lo.id}`, { reference: "GTB-TRF-001" });
+  t("payout recorded + seller notified", r.status === 200 && (await db.collection("notifications").countDocuments({ recipient: ids.seller, title: "TechNest has paid you" })) === 1);
+  r = await C.admin.req("PATCH", `/api/admin/finance/payouts/${lo.id}`, {});
+  t("can't pay twice", r.status === 409);
+  r = await C.admin.req("PATCH", `/api/admin/finance/commissions/${rq.id}`, { reference: "OPAY-77" });
+  t("commission collected + vendor receipt", r.status === 200 && (await db.collection("notifications").countDocuments({ recipient: ids.v1, title: "Commission payment received" })) === 1);
+  r = await C.v1.req("GET", "/api/vendor/commissions");
+  t("vendor view updates", r.json.data.owed === 0 && r.json.data.paid === 25000);
+  r = await C.admin.req("GET", "/api/admin/finance");
+  t("nothing outstanding now", r.json.data.outstanding.owedToSellers === 0 && r.json.data.outstanding.owedByVendors === 0);
+  r = await C.buyer.req("GET", "/api/admin/finance");
+  t("finance is admin-only", r.status === 403);
+});
+
 (async () => {
   const mongo = await MongoMemoryServer.create();
   const uri = mongo.getUri("technest_test");

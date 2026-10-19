@@ -9,6 +9,7 @@ const { sendSuccess, sendError } = require("../utils/response");
 const { notify } = require("../utils/notify");
 const { reserveListing, releaseListing, RESERVATION_HOURS } = require("../utils/availability");
 const { whatsappLink } = require("./orderRequests");
+const { settleAmounts } = require("../utils/finance");
 const router = express.Router();
 
 router.use(protect, restrictTo("admin"));
@@ -61,6 +62,10 @@ router.get("/", async (req, res, next) => {
       requests: requests.map((r) => ({
         ...r.toClient(),
         adminNotes: r.adminNotes,
+        finalPrice: r.finalPrice ?? undefined,
+        commission: r.commission ?? undefined,
+        sellerPayout: r.sellerPayout ?? undefined,
+        payoutStatus: r.payoutStatus,
         buyer: r.buyer,
         listing: r.listing,
         handledBy: r.handledBy,
@@ -100,6 +105,8 @@ router.get("/", async (req, res, next) => {
  *             properties:
  *               status: { type: string, enum: [in_progress, completed, cancelled] }
  *               adminNotes: { type: string, maxLength: 1000 }
+ *               finalPrice: { type: number, description: "completed only — what the buyer actually paid (default: the order amount)" }
+ *               commission: { type: number, description: "completed only — TechNest's share (default: the whole price for cart orders, PLATFORM_FEE_PERCENT for listings). For a listing the seller is owed finalPrice − commission." }
  *     responses:
  *       200:
  *         description: data.request
@@ -138,6 +145,16 @@ router.patch("/:id", verifyCsrfToken, async (req, res, next) => {
         await buyerUpdate(`We're on your order ${request.reference}`, "Our team is arranging your order and will keep you posted on WhatsApp.");
     }
 
+    let amounts = null;
+    if (next_ === "completed") {
+      // Cart items are TechNest's own sales; on a listing TechNest keeps its fee
+      amounts = settleAmounts(req.body, {
+        defaultPrice: request.amount,
+        ...(request.listing ? {} : { defaultCommissionFor: (price) => price }),
+      });
+      if (amounts.error) return sendError(res, 400, amounts.error);
+    }
+
     if (next_ === "completed" && request.listing) {
       const listing = await Listing.findOneAndUpdate(
         { _id: request.listing, status: "active" },
@@ -169,6 +186,13 @@ router.patch("/:id", verifyCsrfToken, async (req, res, next) => {
         })),
       ]);
     }
+    if (next_ === "completed") {
+      Object.assign(request, amounts, {
+        sellerPayout: request.listing ? amounts.finalPrice - amounts.commission : 0,
+        payoutStatus: request.listing ? "pending" : "none",
+        completedAt: new Date(),
+      });
+    }
     if (next_ === "completed")
       await buyerUpdate(`Order ${request.reference} complete`, "Thanks for buying with TechNest!");
 
@@ -183,7 +207,14 @@ router.patch("/:id", verifyCsrfToken, async (req, res, next) => {
     }
     await request.save();
     sendSuccess(res, 200, "Order request updated", {
-      request: { ...request.toClient(), adminNotes: request.adminNotes },
+      request: {
+        ...request.toClient(),
+        adminNotes: request.adminNotes,
+        finalPrice: request.finalPrice ?? undefined,
+        commission: request.commission ?? undefined,
+        sellerPayout: request.sellerPayout ?? undefined,
+        payoutStatus: request.payoutStatus,
+      },
     });
   } catch (err) {
     next(err);
