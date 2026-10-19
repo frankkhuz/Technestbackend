@@ -22,6 +22,7 @@ categories with filters, flash sales, bulk upload and more. A few changes
 | **Owner email / vendor phone missing on listings** | `app/admin/page.tsx` (`owner?.email`, `vendorProfile?.phone`) | Admins still get them from `/api/admin/listings` and `/api/admin/vendors/pending` — use those there. Public listing `owner` now has only `name`, `vendorProfile.businessName/city/states`, `identityVerified`, `phoneVerified`. §22 |
 | **Users get a 403 they can't fix** | every form that lists, buys, bids, posts a request | On `code: "email_not_verified"` show the `message` and a **Resend link** button → `POST /api/auth/resend-verification`. §14 |
 | **Vendor forms rejected with "Invalid CSRF token"** if not using `apiFetch` | `app/become-vendor/page.tsx` | `PATCH /api/vendor/upgrade` and `/verify` now need the `X-CSRF-Token` header like every other form. §22 |
+| **Phone swaps are rejected** — the offered phone's IMEI is now required | the swap form (`/marketplace` swap window) | Send `offeredDevice.imei` when the offered device is a phone; show the 400/409 message. §25 |
 
 ## 2. Changed responses
 
@@ -110,7 +111,27 @@ These Next.js routes talk to MongoDB directly. They don't work on Vercel
   `deviceRequest` ids.
 - Optional status banner from `GET /api/health`.
 
-## 6. Testing tips
+## 6. Newer additions (§25)
+
+- **Account settings:** log out everywhere, download my data, delete my
+  account, email preferences.
+- **Sellers:** "Still available" button — listings expire after 30 days
+  without it; expired badge.
+- **Ratings:** stars on offers and the vendor directory, a vendor rating
+  page, "Rate your deal" prompts after completed deals, vendor replies.
+- **Disputes:** "Report a problem" on deals and orders, with a message
+  thread.
+- **WhatsApp checkout:** delivery or pickup, address; delivery status and
+  rider on "My orders".
+- **Marketplace:** search box, price range, storage, sort.
+- **Catalog:** "Only N left" when `lowStock`.
+- **Admin:** finance (earnings, payouts owed, commissions due, "mark
+  paid"), disputes, reviews moderation, activity log, force sign-out, and
+  final price / commission when completing an order or request.
+- **Removed:** `/api/gadgets`, `/api/prices`, `/api/devices`,
+  `/api/recommendations` — unused by the frontend.
+
+## 7. Testing tips
 
 - In the docs, log in with `POST /api/auth/login` → **Try it out**; the
   session cookies are set for you. For POST / PATCH / DELETE, click

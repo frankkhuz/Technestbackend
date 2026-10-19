@@ -769,6 +769,87 @@ off. Show it on the "Update prices" page.
   to be resent while the database is down, so no payment confirmation is
   lost.
 
+## 25. Gap fixes (trust, money, privacy)
+
+**Swaps** — when the offered device is a phone, `offeredDevice.imei` is
+**required** (`POST /api/transactions` with `type: "swap"`). Invalid → 400,
+reported stolen → 409. The seller sees `swapDetails.offeredImeiLast4` and
+`offeredImeiCheck` (`mismatch` = the IMEI belongs to another model — show a
+warning). Also accepts `cosmeticGrade`, `faults`, `snapchatStatus`,
+`accountLocked` like the valuation form.
+
+**Log out everywhere** — `POST /api/auth/logout-all` (a button in account
+settings). Password resets do it automatically. A 401 with "You've been
+signed out" means the session was ended — send the user to log in.
+
+**Listing expiry** — listings must be confirmed every 30 days. Sellers get
+a reminder at 14 days (`listing_update` notification) and the listing
+becomes `status: "expired"` at 30. Show a **"Still available"** button on
+the seller's listings → `POST /api/listings/:id/confirm` (also brings an
+expired one back). Each listing has `lastConfirmedAt`.
+
+**Reviews** — after a completed deal:
+
+- `GET /api/reviews/pending` — deals the user can rate (show "Rate your
+  deal" prompts; the `review_request` notification links here).
+- `POST /api/reviews { source: { type, id }, rating 1–5, comment }`.
+- `GET /api/reviews/users/:userId` — public rating page (average, star
+  counts, reviews). Vendors reply with `POST /api/reviews/:id/reply`.
+- Offers carry `vendorRating: { average, count }`; the vendor directory
+  has `rating`. Show stars.
+- Admin: `GET /api/reviews/admin?maxRating=2`, `PATCH /api/reviews/admin/:id
+  { status: hidden | visible }`.
+
+**Disputes** — a "Report a problem" button on accepted/completed deals
+and orders (up to 7 days after completion):
+
+- `POST /api/disputes { source: { type, id }, reason, description, evidence[] }`
+  — reasons `not_as_described`, `faulty`, `not_delivered`, `wrong_item`,
+  `stolen_or_locked`, `other`.
+- `GET /api/disputes`, `GET /api/disputes/:id` (with `messages` and
+  `yourRole`), `POST /api/disputes/:id/messages { text, evidence }`.
+- Admin page: `GET /api/disputes/admin?status=`, `PATCH /api/disputes/admin/:id
+  { status: investigating | resolved | rejected, resolution, resolutionNote, refundAmount }`.
+
+**WhatsApp order delivery** — `POST /api/order-requests` also takes
+`deliveryMethod` (`delivery` | `pickup`), `deliveryAddress`, `city`. Each
+order has `delivery: { method, address, city, fee, status, riderName,
+riderPhone }` and `totalWithDelivery`. Show the delivery status on "My
+orders". Admins set them with `PATCH /api/admin/order-requests/:id
+{ delivery: { fee, status, riderName, riderPhone } }`; delivery status
+steps: `not_started`, `ready_for_pickup`, `out_for_delivery`, `delivered`,
+`collected`.
+
+**Marketplace search** — `GET /api/listings` adds `q`, `minPrice`,
+`maxPrice`, `storage`, `subType`, `imeiVerified=true`, `sort`
+(`newest`, `price-asc`, `price-desc`). Add a search box and filters.
+
+**Account & privacy** (account settings page):
+
+- "Download my data" → `GET /api/me/export` (a JSON file download).
+- "Delete my account" → `DELETE /api/me { password }` with a clear warning;
+  `409` explains what to settle first (commission owed, open dispute).
+- Email preferences → `GET /api/me` has `emailPrefs`; change with
+  `PATCH /api/me/email-preferences { notifications, announcements }`.
+  Emails now carry a one-click unsubscribe link (handled by the backend).
+
+**Stock** — catalog products may have `stockQuantity` and `lowStock: true`
+(5 or fewer). Show "Only 3 left". Ordering more than are left gets a 409
+with the number in the message.
+
+**Admin pages to add:** Finance (`GET /api/admin/finance?from=&to=` —
+sales, earnings by channel and month, money owed to sellers / by vendors,
+with "Mark paid" → `PATCH /api/admin/finance/payouts/:orderRequestId` and
+`PATCH /api/admin/finance/commissions/:requestId`); completing a WhatsApp
+order or request now takes `finalPrice` and `commission` (pre-filled with
+the defaults); Activity log (`GET /api/admin/audit?q=&targetId=&actor=`);
+force sign-out on the Users page (`POST /api/admin/users/:id/sign-out`).
+Vendors: "My commission" → `GET /api/vendor/commissions`.
+
+**Removed:** `/api/gadgets`, `/api/prices`, `/api/devices`,
+`/api/recommendations` (unused). The recommender at `/api/gadget-recommend`
+is unchanged.
+
 ---
 
 ## Checklist
@@ -808,6 +889,15 @@ off. Show it on the "Update prices" page.
 - [ ] Listing pages: no seller phone/email any more, `bidCount`, paging (section 22)
 - [ ] /value form: cosmetic grade, "what's not working?" checkboxes, Snapchat, "signed out of iCloud/Google?"; show line amounts, confidence and likely range (section 23)
 - [ ] "Temporarily unavailable — try again" message for `code: "service_unavailable"`; optional status banner from `/api/health` (section 24)
+- [ ] Swap form: IMEI for phones (section 25)
+- [ ] "Still available" button on the seller's listings; expired badge (section 25)
+- [ ] Stars on offers, vendor directory and a vendor rating page; "Rate your deal" prompts (section 25)
+- [ ] "Report a problem" on deals and orders, dispute page with messages (section 25)
+- [ ] Delivery choice at WhatsApp checkout; delivery status on "My orders" (section 25)
+- [ ] Marketplace search box and filters (section 25)
+- [ ] Account settings: log out everywhere, download my data, delete account, email preferences (section 25)
+- [ ] "Only N left" on low-stock products (section 25)
+- [ ] Admin: finance, disputes, reviews, activity log, force sign-out; final price/commission when completing (section 25)
 
 ## Backend setup (for whoever deploys it)
 
@@ -828,6 +918,7 @@ EMAIL_FROM_NAME=TechNest                     # optional
 INTERNAL_CRON_SECRET=<random string>         # optional: enables POST /api/internal/tick (section 20)
 ONLINE_PAYMENTS=on                           # optional: only when online payment should go live (needs PAYSTACK_SECRET_KEY)
 ANNOUNCEMENT_EMAIL_LIMIT=200                 # optional: max emails per announcement
+ERROR_ALERT_EMAIL=you@example.com            # optional: who gets emailed when the server breaks (comma-separated)
 ```
 
 ```
