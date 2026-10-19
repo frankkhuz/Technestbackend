@@ -22,6 +22,27 @@ const authorized = (req) => {
   );
 };
 
+/**
+ * @swagger
+ * /api/internal/tick:
+ *   post:
+ *     summary: Scheduler only — close expired requests (auto-picking offers) and clear expired listing holds
+ *     description: Call every ~10 minutes from cron-job.org with the X-Cron-Secret header. Not for the frontend.
+ *     tags: [Internal]
+ *     security: []
+ *     parameters:
+ *       - in: header
+ *         name: X-Cron-Secret
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: "data: { requestsClosed, holdsCleared }"
+ *       401:
+ *         description: Wrong or missing secret
+ *       503:
+ *         description: INTERNAL_CRON_SECRET isn't set on the server
+ */
 router.post("/tick", async (req, res, next) => {
   try {
     if (!process.env.INTERNAL_CRON_SECRET) return sendError(res, 503, "INTERNAL_CRON_SECRET is not set");

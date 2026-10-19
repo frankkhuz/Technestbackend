@@ -6,14 +6,17 @@ const options = {
     openapi: "3.0.0",
     info: {
       title: "Tech Nest Intelligence API",
-      version: "1.2.0",
+      version: "2.0.0",
       description: [
         "Backend for TechNest — buy, sell and swap gadgets.",
         "",
         "**Auth:** log in with `POST /api/auth/login`; the session lives in httpOnly cookies (`accessToken`, `refreshToken`).",
         "**CSRF:** every POST / PATCH / DELETE made while logged in must send the `X-CSRF-Token` header with the value of the `csrfToken` cookie (also returned by login/register).",
-        "**Envelope:** `{ success, message, data }` on success, `{ success: false, message }` on error. Exception: `/api/listings` errors use `{ success: false, error }`.",
-        "**Money:** all amounts are Nigerian naira (₦) as whole numbers; Paystack is charged in kobo internally.",
+        "**Envelope:** `{ success, message, data }` on success, `{ success: false, message, code }` on error — `message` is safe to show users. Exception: `/api/listings` errors use `{ success: false, error }`.",
+        "**Error codes:** `email_not_verified` (show a \"Resend link\" button), `service_unavailable` (temporary — retry after `Retry-After` seconds), `bad_json`, `too_large`, `invalid`, `duplicate`, `cors`, `server_error`.",
+        "**Email verification:** listing, buying, bidding, requests and vendor/identity forms need a confirmed email (403 `email_not_verified`).",
+        "**Money:** all amounts are Nigerian naira (₦) as whole numbers; Paystack is charged in kobo internally. Online payment is \"coming soon\" — buyers order through WhatsApp (`/api/order-requests`).",
+        "**Status:** `GET /api/health`. Full frontend guide: API_INTEGRATION.md and FRONTEND_CHANGES.md in the backend repo.",
       ].join("\n\n"),
     },
     tags: [
@@ -39,6 +42,7 @@ const options = {
       { name: "Categories", description: "Category tree and per-category filters" },
       { name: "Admin — Announcements", description: "Message vendors or customers in-app and by email" },
       { name: "Health", description: "Uptime check for monitors and the frontend's status banner" },
+      { name: "Internal", description: "Called by a scheduler, not the frontend" },
       { name: "Phone", description: "Verify a phone number on WhatsApp — automatic via the Cloud API, or by staff" },
       { name: "Admin — Users", description: "Find users; verify phone numbers by hand" },
       { name: "Vendor" },
@@ -53,7 +57,9 @@ const options = {
     ],
     servers: [
       {
-        url: process.env.API_URL || "http://localhost:5000",
+        // Same server as the docs page unless API_URL says otherwise, so
+        // "Try it out" works on Render and locally alike
+        url: process.env.API_URL || "/",
         description: "API server",
       },
     ],
