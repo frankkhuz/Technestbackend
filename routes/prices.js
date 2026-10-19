@@ -1,6 +1,7 @@
 const express = require("express");
 const { Gadget } = require("../models/Gadget");
 const { protect, restrictTo } = require("../middleware/auth");
+const { verifyCsrfToken } = require("../middleware/csrf");
 const { sendSuccess, sendError } = require("../utils/response");
 const router = express.Router();
 
@@ -67,6 +68,7 @@ router.patch(
   "/:gadgetId",
   protect,
   restrictTo("admin"),
+  verifyCsrfToken,
   async (req, res, next) => {
     try {
       const { price } = req.body;

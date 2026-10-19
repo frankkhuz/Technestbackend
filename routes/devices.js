@@ -1,6 +1,7 @@
 const express = require("express");
 const { Device, Gadget } = require("../models/Gadget");
 const { protect } = require("../middleware/auth");
+const { verifyCsrfToken } = require("../middleware/csrf");
 const { sendSuccess, sendError } = require("../utils/response");
 const router = express.Router();
 
@@ -71,7 +72,7 @@ router.get("/", protect, async (req, res, next) => {
  *       404:
  *         description: Gadget not found
  */
-router.post("/", protect, async (req, res, next) => {
+router.post("/", protect, verifyCsrfToken, async (req, res, next) => {
   try {
     const {
       gadgetId,
@@ -162,7 +163,7 @@ router.get("/:id", protect, async (req, res, next) => {
  *       404:
  *         description: Device not found
  */
-router.delete("/:id", protect, async (req, res, next) => {
+router.delete("/:id", protect, verifyCsrfToken, async (req, res, next) => {
   try {
     const device = await Device.findOneAndDelete({
       _id: req.params.id,

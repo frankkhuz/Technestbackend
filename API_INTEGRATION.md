@@ -657,6 +657,27 @@ automatically wherever prices are worked out.
   on time (auto-picking offers) and keeps the free Render server awake.
   Everything still works without it.
 
+## 22. Marketplace privacy changes (may need frontend updates)
+
+TechNest is the middleman, so public listing responses no longer include
+the seller's contact details:
+
+- `GET /api/listings` and `GET /api/listings/:id` **no longer return
+  `userPhone`, the owner's email, or `vendorProfile.phone`/`shopAddress`**
+  to the public. `owner` now has `name`, `vendorProfile.businessName`,
+  `city`, `states`, `identityVerified`, `phoneVerified`. Replace any "Call
+  seller" / "WhatsApp seller" button with the WhatsApp checkout (section
+  15). The listing's owner and admins still see everything.
+- `bids[]` is empty for the public; vendors see only their own bid. Use
+  `bidCount` for "3 offers so far". Owners still see every bid.
+- `status=pending_review` / `rejected` / `removed` are admin-only (`403`),
+  and those listings return `404` to anyone but the owner or an admin. Use
+  `GET /api/listings/mine` for the seller's own listings in any status.
+- The feed is paged: `?page=&limit=` (max 100), with `total` and `pages`
+  in the response. The default is the first 100.
+- `PATCH /api/vendor/upgrade` and `PATCH /api/vendor/verify` now require
+  the `X-CSRF-Token` header like every other form (`apiFetch` sends it).
+
 ## 21. Phone verification on WhatsApp
 
 One button, **"Verify my number"**, works in two modes — the backend picks:
@@ -737,6 +758,7 @@ Ordinary messages to the verification number get no bot reply.
 - [ ] Admin: WhatsApp orders, identity checks, requests, categories editor, bulk upload, flash sale, announcements
 - [ ] "Does Snapchat work on this phone?" on the sell form
 - [ ] "Verify my number" button + "Phone verified" tick; admin Users page with the phone waiting list (section 21)
+- [ ] Listing pages: no seller phone/email any more, `bidCount`, paging (section 22)
 
 ## Backend setup (for whoever deploys it)
 
@@ -772,6 +794,13 @@ database). It takes about 50 MB of the database. Re-run it with a newer copy
 of the file every few months to pick up new phones.
 
 Set the Paystack webhook to `<backend>/api/checkout/webhook`.
+
+**Tests:** `npm test` runs every end-to-end suite in `test/` (about 270
+checks, a few minutes). Each suite starts the real server against a
+throwaway in-memory MongoDB with email, Paystack, Cloudinary and WhatsApp
+mocked, so nothing real is sent and no real database is touched. The first
+run downloads a MongoDB binary. Run one suite with `npm test -- imei` (or
+`email`, `marketplace`, `phone`, `privacy`). Run it before every deploy.
 
 **Updating prices later:** use the admin "Update prices" page (section 10).
 Valuation prices now live in the database; on first start, the server fills

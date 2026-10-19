@@ -30,7 +30,7 @@ const router = express.Router();
  *       200:
  *         description: Account upgraded to vendor
  */
-router.patch("/upgrade", protect, async (req, res, next) => {
+router.patch("/upgrade", protect, verifyCsrfToken, async (req, res, next) => {
   try {
     if (req.user.userType === "admin")
       return sendError(res, 400, "Not applicable for this account");
@@ -97,7 +97,7 @@ router.patch("/upgrade", protect, async (req, res, next) => {
  *       400:
  *         description: Missing or invalid fields
  */
-router.patch("/verify", protect, requireVerified, async (req, res, next) => {
+router.patch("/verify", protect, verifyCsrfToken, requireVerified, async (req, res, next) => {
   try {
     if (req.user.userType !== "vendor")
       return sendError(res, 400, "Upgrade to a vendor account first");

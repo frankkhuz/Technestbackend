@@ -4,7 +4,7 @@ const Listing = require("../models/Listing");
 const Transaction = require("../models/Transaction");
 const { notify } = require("../utils/notify");
 const { normalizeNigerianPhone } = require("../utils/pricing");
-const { protect, requireVerified } = require("../middleware/auth");
+const { protect, optionalAuth, requireVerified } = require("../middleware/auth");
 const { verifyCsrfToken } = require("../middleware/csrf");
 const { sendSuccess, sendError } = require("../utils/response");
 const { templateDescription } = require("../utils/listingChecks");
@@ -63,31 +63,81 @@ const withoutImeiHash = (listing) => {
  *         schema: { type: string }
  *       - in: query
  *         name: status
+ *         description: "active, sold or swapped; other statuses are admin-only"
  *         schema: { type: string, default: active }
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, default: 1 }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 100, maximum: 100 }
  *       - in: query
  *         name: available
  *         description: "true = leave out listings currently held for a buyer"
  *         schema: { type: string, enum: ["true"] }
  *     responses:
  *       200:
- *         description: "data.listings — each with populated owner { _id, name, email, vendorProfile, identityVerified }, bids[], isReserved and isAvailable"
+ *         description: >
+ *           data.listings (+ total, page, pages). Public view: owner { name,
+ *           vendorProfile.businessName/city/states, identityVerified,
+ *           phoneVerified } — no seller phone or email (TechNest is the
+ *           middleman); bids[] holds only the viewing vendor's own bid, with
+ *           bidCount for the total. The listing's owner and admins see
+ *           everything.
  */
-router.get("/", async (req, res, next) => {
-  try {
-    const { deviceCategory, listingType, status } = req.query;
+// What anyone may see on the marketplace. TechNest is the middleman, so
+// the seller's contact details stay private; the owner and admins see
+// everything.
+const PUBLIC_STATUSES = ["active", "sold", "swapped"];
+const PUBLIC_OWNER_FIELDS =
+  "name vendorProfile.businessName vendorProfile.city vendorProfile.states identityVerified phoneVerified createdAt";
 
-    const filter = { status: status || "active" };
-    if (deviceCategory) filter.deviceCategory = deviceCategory;
-    if (listingType) filter.listingType = listingType;
+const forViewer = (listing, viewer) => {
+  const l = listing.toObject();
+  delete l.imeiHash;
+  const ownerId = String(l.owner?._id || l.owner);
+  if (viewer && (String(viewer._id) === ownerId || viewer.userType === "admin")) return l;
+
+  delete l.userPhone;
+  delete l.aiReview;
+  delete l.reservedFor;
+  delete l.rejectionReason;
+  // Vendors bid blind: they see how many offers there are and their own
+  const mine = viewer && l.bids.find((b) => String(b.vendor) === String(viewer._id));
+  l.bidCount = l.bids.length;
+  l.bids = mine ? [mine] : [];
+  return l;
+};
+
+router.get("/", optionalAuth, async (req, res, next) => {
+  try {
+    const { deviceCategory, listingType } = req.query;
+    const status = String(req.query.status || "active");
+    if (!PUBLIC_STATUSES.includes(status) && req.user?.userType !== "admin")
+      return res.status(403).json({ success: false, error: "Only admins can browse listings in review." });
+
+    const filter = { status };
+    if (deviceCategory) filter.deviceCategory = String(deviceCategory);
+    if (listingType) filter.listingType = String(listingType);
     // Hide listings held for a buyer (each listing also carries isReserved / isAvailable)
     if (req.query.available === "true")
       filter.$or = [{ reservedUntil: null }, { reservedUntil: { $lte: new Date() } }];
 
-    const listings = await Listing.find(filter)
-      .populate("owner", "name email vendorProfile identityVerified phoneVerified")
-      .sort({ createdAt: -1 });
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 100));
+    const [listings, total] = await Promise.all([
+      Listing.find(filter)
+        .populate("owner", PUBLIC_OWNER_FIELDS)
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit),
+      Listing.countDocuments(filter),
+    ]);
 
-    res.json({ success: true, data: { listings } });
+    res.json({
+      success: true,
+      data: { listings: listings.map((l) => forViewer(l, req.user)), total, page, pages: Math.ceil(total / limit) },
+    });
   } catch (err) {
     next(err);
   }
@@ -173,21 +223,23 @@ router.get("/mine", protect, async (req, res, next) => {
  *       403:
  *         description: Not your listing
  */
-router.get("/:id", async (req, res, next) => {
+router.get("/:id", optionalAuth, async (req, res, next) => {
   try {
     if (!mongoose.isValidObjectId(req.params.id))
       return res
         .status(404)
         .json({ success: false, error: "Listing not found" });
-    const listing = await Listing.findById(req.params.id).populate(
-      "owner",
-      "name email vendorProfile identityVerified phoneVerified"
-    );
-    if (!listing)
+    const listing = await Listing.findById(req.params.id).populate("owner", PUBLIC_OWNER_FIELDS);
+    const canSee =
+      listing &&
+      (PUBLIC_STATUSES.includes(listing.status) ||
+        req.user?.userType === "admin" ||
+        String(listing.owner?._id || listing.owner) === String(req.user?._id));
+    if (!canSee)
       return res
         .status(404)
         .json({ success: false, error: "Listing not found" });
-    res.json({ success: true, data: { listing } });
+    res.json({ success: true, data: { listing: forViewer(listing, req.user) } });
   } catch (err) {
     next(err);
   }
