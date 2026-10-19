@@ -54,10 +54,6 @@ const options = {
       { name: "Uploads" },
       { name: "Admin" },
       { name: "Admin — Prices", description: "Valuation prices: edit by hand, or paste a dealer list (read by AI or the free reader), preview, apply" },
-      { name: "Gadgets", description: "Legacy gadget price-tracking (not used by the current frontend)" },
-      { name: "Prices", description: "Legacy — see Gadgets" },
-      { name: "Devices", description: "Legacy — see Gadgets" },
-      { name: "Recommendations", description: "Legacy — see Gadgets. The AI recommender is under Gadget Recommender." },
     ],
     servers: [
       {

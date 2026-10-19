@@ -90,7 +90,6 @@ const UserSchema = new mongoose.Schema(
       reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
       rejectionReason: String,
     },
-    devices: [{ type: mongoose.Schema.Types.ObjectId, ref: "Device" }],
   },
   { timestamps: true }
 );

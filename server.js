@@ -9,10 +9,6 @@ const connectDB = require("./config/db");
 const sanitizeRequest = require("./middleware/sanitize");
 const { sendError } = require("./utils/response");
 
-const gadgetRoutes = require("./routes/gadgets");
-const priceRoutes = require("./routes/prices");
-const deviceRoutes = require("./routes/devices");
-const recommendRoutes = require("./routes/recommendations");
 const authRoutes = require("./routes/auth");
 const listingRoutes = require("./routes/listings");
 const vendorRoutes = require("./routes/vendor");
@@ -182,10 +178,6 @@ app.use("/api", (req, res, next) => (req.path.startsWith("/docs") ? next() : req
 // Records every successful admin change (who, what, when) — see /api/admin/audit
 app.use("/api", auditAdminActions);
 
-app.use("/api/gadgets", gadgetRoutes);
-app.use("/api/prices", priceRoutes);
-app.use("/api/devices", deviceRoutes);
-app.use("/api/recommendations", recommendRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/listings", listingRoutes);
 app.use("/api/vendors", vendorRoutes);
