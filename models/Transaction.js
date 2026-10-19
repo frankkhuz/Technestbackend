@@ -35,6 +35,17 @@ const SwapDetailsSchema = new mongoose.Schema(
       enum: ["pay_extra", "refund", "even"],
       required: true,
     },
+    // Offered phones are IMEI-screened like listings: never stolen, and the
+    // model the IMEI belongs to is shown to the seller
+    offeredImeiLast4: { type: String, default: null },
+    offeredImeiCheck: {
+      type: {
+        modelMatch: { type: String, enum: ["match", "mismatch", "unknown"] },
+        tacBrand: String,
+        tacModel: String,
+      },
+      default: null,
+    },
   },
   { _id: false }
 );
@@ -120,6 +131,8 @@ TransactionSchema.methods.toClient = function () {
           targetPriceMax: sd.targetPriceMax,
           priceDifference: sd.priceDifference,
           direction: sd.direction,
+          offeredImeiLast4: sd.offeredImeiLast4 || undefined,
+          offeredImeiCheck: sd.offeredImeiCheck?.modelMatch ? sd.offeredImeiCheck : undefined,
         }
       : undefined,
     topUpAmount: this.topUpAmount,

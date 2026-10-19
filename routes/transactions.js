@@ -9,6 +9,7 @@ const { sendSuccess, sendError } = require("../utils/response");
 const { calculateValuation, pickCondition } = require("../utils/valuation");
 const { midpoint } = require("../utils/pricing");
 const { listingUnavailableReason } = require("../utils/availability");
+const { parseImei, hashImei, compareModel, findOpenStolenReport, recordStolenHit } = require("../utils/imei");
 const router = express.Router();
 
 router.use(protect);
@@ -175,6 +176,11 @@ const buildSwapQuote = (listing, offeredDevice) => {
  *         ramUpgraded: { type: boolean }
  *         storageUpgraded: { type: boolean }
  *         otherRepairs: { type: string }
+ *         imei: { type: string, description: "Required when category is phone — screened against stolen reports; only the last 4 digits are kept" }
+ *         cosmeticGrade: { type: string, enum: [like_new, good, fair, poor] }
+ *         faults: { type: array, items: { type: string }, description: ids from GET /api/valuation/conditions }
+ *         snapchatStatus: { type: string, enum: [works, banned, unknown] }
+ *         accountLocked: { type: boolean, description: "true = refused" }
  * /api/transactions:
  *   post:
  *     summary: Open a swap or buy request on a marketplace listing
@@ -241,6 +247,20 @@ router.post("/", requireVerified, verifyCsrfToken, async (req, res, next) => {
       if (quote.error) return sendError(res, 400, quote.error);
       swapDetails = quote.details;
       topUpAmount = Math.max(0, quote.details.priceDifference);
+
+      // A stolen phone mustn't come in through a swap any more than a listing
+      if (offeredDevice.category === "phone") {
+        const parsed = parseImei(offeredDevice.imei);
+        if (parsed.error)
+          return sendError(res, 400, offeredDevice.imei ? parsed.error : "Add the IMEI of the phone you're offering — dial *#06# on it to see it.");
+        const report = await findOpenStolenReport(hashImei(parsed.imei));
+        if (report) {
+          await recordStolenHit(report, "listing", req.user._id);
+          return sendError(res, 409, "The phone you're offering has been reported stolen, so it can't be swapped. If you think this is a mistake, contact support.");
+        }
+        swapDetails.offeredImeiLast4 = parsed.last4;
+        swapDetails.offeredImeiCheck = await compareModel(parsed.tac, swapDetails.offeredDeviceName);
+      }
     }
 
     const message =

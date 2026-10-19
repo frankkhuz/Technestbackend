@@ -130,7 +130,7 @@ class Client {
   await C.admin.req("PATCH", `/api/admin/listings/${L}/approve`);
   r = await C.buyer.req("POST", "/api/transactions/swap-quote", { listingId: L, offeredDevice: { ...iphone, accountLocked: true } });
   t("swap with a locked device refused", r.status === 400 && /iCloud or Google/.test(r.json.message), J(r.json));
-  r = await C.buyer.req("POST", "/api/transactions", { type: "swap", listingId: L, offeredDevice: { ...iphone, faults: ["screen_cracked"], cosmeticGrade: "good" } });
+  r = await C.buyer.req("POST", "/api/transactions", { type: "swap", listingId: L, offeredDevice: { ...iphone, imei: "490154203237518", faults: ["screen_cracked"], cosmeticGrade: "good" } });
   const sd = r.json?.data?.transaction?.swapDetails;
   t("swap stores faults + grade and prices them", r.status === 201 && J(sd.offeredCondition.faults) === '["screen_cracked"]' && sd.offeredCondition.cosmeticGrade === "good" && sd.offeredValuation === Math.round(((Math.round(BASE * 0.96) - screen) * 0.97 + (Math.round(BASE * 0.96) - screen) * 1.03) / 2), J(sd));
 
