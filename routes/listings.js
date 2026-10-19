@@ -14,6 +14,8 @@ const { screenListingImei, compareModel } = require("../utils/imei");
 const { freshConfirmation, REACTIVATE_WITHIN_DAYS } = require("../utils/listingExpiry");
 const router = express.Router();
 
+const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 // imeiHash is select:false, but a document we just created or assigned it
 // on still carries it — strip it before sending
 const withoutImeiHash = (listing) => {
@@ -76,6 +78,29 @@ const withoutImeiHash = (listing) => {
  *         name: available
  *         description: "true = leave out listings currently held for a buyer"
  *         schema: { type: string, enum: ["true"] }
+ *       - in: query
+ *         name: q
+ *         description: "Search words — all must appear in the device name or description"
+ *         schema: { type: string, example: iphone 13 pro }
+ *       - in: query
+ *         name: minPrice
+ *         schema: { type: number }
+ *       - in: query
+ *         name: maxPrice
+ *         schema: { type: number }
+ *       - in: query
+ *         name: storage
+ *         schema: { type: string, example: 256GB }
+ *       - in: query
+ *         name: subType
+ *         schema: { type: string, example: iphone }
+ *       - in: query
+ *         name: imeiVerified
+ *         description: "true = only listings with a checked IMEI"
+ *         schema: { type: string }
+ *       - in: query
+ *         name: sort
+ *         schema: { type: string, enum: [newest, price-asc, price-desc], default: newest }
  *     responses:
  *       200:
  *         description: >
@@ -130,6 +155,22 @@ router.get("/", optionalAuth, async (req, res, next) => {
     const filter = { status };
     if (deviceCategory) filter.deviceCategory = String(deviceCategory);
     if (listingType) filter.listingType = String(listingType);
+    if (req.query.subType) filter.subType = String(req.query.subType);
+    if (req.query.storage) filter.storage = new RegExp(`^${escapeRegex(String(req.query.storage).slice(0, 20))}$`, "i");
+    if (req.query.imeiVerified === "true") filter.imeiVerified = true;
+    const q = typeof req.query.q === "string" ? req.query.q.trim().slice(0, 60) : "";
+    if (q) {
+      // Every word must appear in the name or description, in any order
+      filter.$and = q.split(/\s+/).map((w) => {
+        const rx = new RegExp(escapeRegex(w), "i");
+        return { $or: [{ deviceName: rx }, { description: rx }] };
+      });
+    }
+    const minPrice = Number(req.query.minPrice);
+    const maxPrice = Number(req.query.maxPrice);
+    if (minPrice > 0 || maxPrice > 0)
+      filter.estimatedMax = { ...(minPrice > 0 ? { $gte: minPrice } : {}), ...(maxPrice > 0 ? { $lte: maxPrice } : {}) };
+    const sort = { "price-asc": { estimatedMax: 1 }, "price-desc": { estimatedMax: -1 } }[req.query.sort] || { createdAt: -1 };
     // Hide listings held for a buyer (each listing also carries isReserved / isAvailable)
     if (req.query.available === "true")
       filter.$or = [{ reservedUntil: null }, { reservedUntil: { $lte: new Date() } }];
@@ -139,7 +180,7 @@ router.get("/", optionalAuth, async (req, res, next) => {
     const [listings, total] = await Promise.all([
       Listing.find(filter)
         .populate("owner", PUBLIC_OWNER_FIELDS)
-        .sort({ createdAt: -1 })
+        .sort(sort)
         .skip((page - 1) * limit)
         .limit(limit),
       Listing.countDocuments(filter),

@@ -423,6 +423,29 @@ section("delivery", async ({ C, db, ids }) => {
   t("buyer sees delivery progress", r.json.data.requests.find((x) => x.id === o.id).delivery.status === "delivered");
 });
 
+// ── Gap 9: marketplace search and filters ──────────────────────────────────
+section("marketplace search", async ({ C, db, Client }) => {
+  const mk = async (body) => {
+    const r = await C.seller.req("POST", "/api/listings", { userName: "S", userPhone: "08031234567", images: [], ...body });
+    await C.admin.req("PATCH", `/api/admin/listings/${r.json.data.listing._id}/approve`);
+    return r.json.data.listing._id;
+  };
+  await db.collection("listings").updateMany({}, { $set: { status: "sold" } }); // start from a clean marketplace
+  await mk({ deviceName: "MacBook Pro M3", storage: "512GB", deviceCategory: "laptop", subType: "macbook", estimatedMin: 1700000, estimatedMax: 1800000, description: "Space grey, 92% battery" });
+  await mk({ deviceName: "MacBook Air M2", storage: "256GB", deviceCategory: "laptop", subType: "macbook", estimatedMin: 800000, estimatedMax: 850000 });
+  await mk({ deviceName: "HP Pavilion 15", storage: "512GB", deviceCategory: "laptop", subType: "windows", estimatedMin: 350000, estimatedMax: 400000 });
+  await mk({ deviceName: "iPhone 11", storage: "128GB", deviceCategory: "phone", subType: "iphone", imei: "490154209999996", estimatedMin: 280000, estimatedMax: 300000 });
+  const g = new Client();
+  const names = async (qs) => (await g.req("GET", `/api/listings?${qs}`)).json.data.listings.map((l) => l.deviceName);
+  t("search: all words, any order, case-insensitive", J(await names("q=pro%20macbook")) === '["MacBook Pro M3"]');
+  t("search also covers the description", J(await names("q=space%20grey")) === '["MacBook Pro M3"]');
+  t("price range", J((await names("minPrice=300000&maxPrice=900000")).sort()) === J(["HP Pavilion 15", "MacBook Air M2", "iPhone 11"]));
+  t("storage + type", J((await names("storage=512gb&subType=macbook"))) === '["MacBook Pro M3"]');
+  t("IMEI-checked only", J(await names("imeiVerified=true")) === '["iPhone 11"]');
+  t("sort by price", J(await names("sort=price-asc")) === J(["iPhone 11", "HP Pavilion 15", "MacBook Air M2", "MacBook Pro M3"]));
+  t("regex characters in a search are safe", (await g.req("GET", "/api/listings?q=(.*")).status === 200);
+});
+
 (async () => {
   const mongo = await MongoMemoryServer.create();
   const uri = mongo.getUri("technest_test");
