@@ -9,6 +9,7 @@ const AiUsage = require("../models/AiUsage");
 const { runListingChecks, findMarketDevice } = require("../utils/listingChecks");
 const ai = require("../utils/ai");
 const { learnTacFromListing } = require("../utils/imei");
+const { privateUrl } = require("../utils/identity");
 const { protect, restrictTo } = require("../middleware/auth");
 const { verifyCsrfToken } = require("../middleware/csrf");
 const { sendSuccess, sendError } = require("../utils/response");
@@ -37,9 +38,15 @@ router.get("/vendors/pending", async (req, res, next) => {
       userType: "vendor",
       vendorVerified: false,
       "vendorProfile.phone": { $exists: true, $ne: null },
-    }).select("name email vendorProfile createdAt");
+    }).select("name email vendorProfile vendorDocuments identity.status identity.nameMatch identityVerified createdAt");
 
-    sendSuccess(res, 200, "Pending vendors fetched", { vendors: pending });
+    sendSuccess(res, 200, "Pending vendors fetched", {
+      vendors: pending.map((v) => ({
+        ...v.toObject(),
+        vendorDocuments: undefined,
+        cacCertificateUrl: privateUrl(v.vendorDocuments?.cacCertificateId),
+      })),
+    });
   } catch (err) {
     next(err);
   }

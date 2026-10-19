@@ -11,6 +11,7 @@ const StolenReport = require("../models/StolenReport");
 const TacDevice = require("../models/TacDevice");
 const { notify } = require("./notify");
 const { normalizeDeviceName } = require("./textParsing");
+const { splitCsvLine, detectSeparator } = require("./csv");
 
 // Luhn check digit for the 14-digit IMEI body: double every second digit
 // counting from the right of the body, sum the digits, round up to 10.
@@ -203,25 +204,6 @@ const learnTacFromListing = async (listing) => {
   );
 };
 
-// Splits one CSV line, honouring "quoted, cells" and "" escapes
-const splitCsvLine = (line, sep) => {
-  const cells = [];
-  let cur = "";
-  let quoted = false;
-  for (let i = 0; i < line.length; i++) {
-    const ch = line[i];
-    if (quoted) {
-      if (ch === '"' && line[i + 1] === '"') (cur += '"'), i++;
-      else if (ch === '"') quoted = false;
-      else cur += ch;
-    } else if (ch === '"') quoted = true;
-    else if (ch === sep) cells.push(cur.trim()), (cur = "");
-    else cur += ch;
-  }
-  cells.push(cur.trim());
-  return cells;
-};
-
 const titleCase = (s) =>
   s
     .toLowerCase()
@@ -253,7 +235,7 @@ const parseTacCsv = (text) => {
   const seen = new Set();
   const lines = String(text || "").split(/\r?\n/);
   const first = lines.find((l) => l.trim()) || "";
-  const sep = [",", "\t", ";"].find((s) => first.includes(s)) || ",";
+  const sep = detectSeparator(first);
 
   // Column positions from a header row, if there is one
   let col = { tac: 0, brand: 1, model: 2, deviceType: 3, specs: -1 };

@@ -39,6 +39,7 @@ const withoutImeiHash = (listing) => {
  *         simType: { type: string, enum: [physical, esim-unlocked, locked] }
  *         faceIdStatus: { type: string, enum: [working, broken] }
  *         repairs: { type: array, items: { type: string } }
+ *         snapchatStatus: { type: string, enum: [works, banned, unknown], description: "Does Snapchat work on this device? Some devices are banned by Snapchat" }
  *         description: { type: string, maxLength: 1000 }
  *         images: { type: array, maxItems: 10, items: { type: string, description: Cloudinary secure_url } }
  *         mediaCount: { type: integer }
@@ -63,9 +64,13 @@ const withoutImeiHash = (listing) => {
  *       - in: query
  *         name: status
  *         schema: { type: string, default: active }
+ *       - in: query
+ *         name: available
+ *         description: "true = leave out listings currently held for a buyer"
+ *         schema: { type: string, enum: ["true"] }
  *     responses:
  *       200:
- *         description: "data.listings — each with populated owner { _id, name, email, vendorProfile } and bids[]"
+ *         description: "data.listings — each with populated owner { _id, name, email, vendorProfile, identityVerified }, bids[], isReserved and isAvailable"
  */
 router.get("/", async (req, res, next) => {
   try {
@@ -74,9 +79,12 @@ router.get("/", async (req, res, next) => {
     const filter = { status: status || "active" };
     if (deviceCategory) filter.deviceCategory = deviceCategory;
     if (listingType) filter.listingType = listingType;
+    // Hide listings held for a buyer (each listing also carries isReserved / isAvailable)
+    if (req.query.available === "true")
+      filter.$or = [{ reservedUntil: null }, { reservedUntil: { $lte: new Date() } }];
 
     const listings = await Listing.find(filter)
-      .populate("owner", "name email vendorProfile")
+      .populate("owner", "name email vendorProfile identityVerified")
       .sort({ createdAt: -1 });
 
     res.json({ success: true, data: { listings } });
@@ -173,7 +181,7 @@ router.get("/:id", async (req, res, next) => {
         .json({ success: false, error: "Listing not found" });
     const listing = await Listing.findById(req.params.id).populate(
       "owner",
-      "name email vendorProfile"
+      "name email vendorProfile identityVerified"
     );
     if (!listing)
       return res
@@ -216,6 +224,7 @@ router.post("/", protect, requireVerified, verifyCsrfToken, async (req, res, nex
       simType,
       faceIdStatus,
       repairs,
+      snapchatStatus,
       mediaCount,
       images,
       imei,
@@ -282,6 +291,7 @@ router.post("/", protect, requireVerified, verifyCsrfToken, async (req, res, nex
       simType,
       faceIdStatus,
       repairs: repairs || [],
+      snapchatStatus: ["works", "banned"].includes(snapchatStatus) ? snapchatStatus : "unknown",
       description: typeof description === "string" ? description.slice(0, 1000) : null,
       mediaCount: mediaCount || 0,
       images: safeImages,
@@ -458,6 +468,7 @@ router.patch("/:id", protect, verifyCsrfToken, async (req, res, next) => {
       "simType",
       "faceIdStatus",
       "repairs",
+      "snapchatStatus",
       "description",
       "mediaCount",
       "images",

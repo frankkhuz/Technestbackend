@@ -65,6 +65,9 @@ const runListingChecks = async (listing) => {
   if (listing.imeiTac && !listing.imeiPhoto)
     add("no_imei_photo", "info", "No photo of the *#06# screen.");
 
+  if (listing.snapchatStatus === "banned")
+    add("snapchat_banned", "medium", "Seller says Snapchat is banned on this device — buyers usually expect a lower price.");
+
   const battery = Number(listing.batteryHealth);
   if (Number.isFinite(battery) && battery > 0 && battery < 80)
     add("low_battery", "info", `Battery health ${battery}%.`);

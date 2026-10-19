@@ -8,6 +8,8 @@ const InventoryItemSchema = new mongoose.Schema(
       required: true,
     },
     deviceName: { type: String, required: true, trim: true, maxlength: 150 },
+    storage: { type: String, trim: true, maxlength: 30, default: null },
+    category: { type: String, trim: true, maxlength: 40, default: null },
     buyPrice: { type: Number, required: true, min: 0 },
     sellPrice: { type: Number, required: true, min: 0 },
     condition: {

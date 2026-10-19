@@ -10,6 +10,7 @@ const { verifyCsrfToken } = require("../middleware/csrf");
 const { sendSuccess, sendError } = require("../utils/response");
 const paystack = require("../utils/paystack");
 const { settleOrder } = require("../utils/orderEffects");
+const { listingUnavailableReason } = require("../utils/availability");
 const {
   computeListingCheckout,
   isValidNigerianPhone,
@@ -37,8 +38,8 @@ const resolveListingPurchase = async (listingId, user) => {
   const listing = await Listing.findById(listingId);
   if (!listing || !listing.owner)
     return { error: "That listing could not be found.", status: 404 };
-  if (listing.status !== "active")
-    return { error: "This listing is no longer available.", status: 409 };
+  const unavailable = listingUnavailableReason(listing);
+  if (unavailable) return { error: unavailable, status: 409 };
   if (listing.owner.toString() === user._id.toString())
     return { error: "You can't buy your own listing.", status: 400 };
 

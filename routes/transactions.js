@@ -8,6 +8,7 @@ const { verifyCsrfToken } = require("../middleware/csrf");
 const { sendSuccess, sendError } = require("../utils/response");
 const { calculateValuation, pickCondition } = require("../utils/valuation");
 const { midpoint } = require("../utils/pricing");
+const { listingUnavailableReason } = require("../utils/availability");
 const router = express.Router();
 
 router.use(protect);
@@ -216,8 +217,8 @@ router.post("/", requireVerified, verifyCsrfToken, async (req, res, next) => {
 
     const listing = await Listing.findById(listingId).populate("owner", "name");
     if (!listing || !listing.owner) return sendError(res, 404, "Listing not found");
-    if (listing.status !== "active")
-      return sendError(res, 409, "This listing is no longer available.");
+    const unavailable = listingUnavailableReason(listing);
+    if (unavailable) return sendError(res, 409, unavailable);
     if (listing.owner._id.toString() === req.user._id.toString())
       return sendError(res, 400, "You can't open a transaction on your own listing.");
 
@@ -380,8 +381,8 @@ router.patch("/:id", verifyCsrfToken, async (req, res, next) => {
     let listing = null;
     if (nextStatus === "accepted" || nextStatus === "completed") {
       listing = await Listing.findById(txn.listing);
-      if (!listing || listing.status !== "active")
-        return sendError(res, 409, "This listing is no longer available.");
+      const unavailable = listingUnavailableReason(listing);
+      if (unavailable) return sendError(res, 409, unavailable);
     }
 
     // Conditional update so two concurrent requests can't both transition

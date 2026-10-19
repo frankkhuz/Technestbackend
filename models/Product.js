@@ -36,6 +36,24 @@ const ProductSchema = new mongoose.Schema(
     priceUkUsed: { type: Number, required: true, min: 0 },
     priceBrandNew: { type: Number, required: true, min: 0 },
 
+    // Filter values for this product's category, e.g. { connectivity:
+    // "Wireless", noiseCancelling: true } — validated against the
+    // category's attribute definitions (utils/categories.js)
+    attributes: { type: mongoose.Schema.Types.Mixed, default: {} },
+
+    // Flash sale: the sale prices apply only between startsAt and endsAt,
+    // checked on every read, so nothing has to switch it on or off
+    sale: {
+      type: {
+        priceUkUsed: { type: Number, min: 0, default: null },
+        priceBrandNew: { type: Number, min: 0, default: null },
+        startsAt: { type: Date, required: true },
+        endsAt: { type: Date, required: true },
+        label: { type: String, trim: true, maxlength: 30, default: "Flash Sale" },
+      },
+      default: null,
+    },
+
     inStock: { type: Boolean, default: true },
     // Soft-delete: hidden from the catalog but kept so old orders (and
     // "buy again") can still resolve the slug to a name.
@@ -46,9 +64,22 @@ const ProductSchema = new mongoose.Schema(
 
 ProductSchema.index({ type: 1, category: 1, isActive: 1 });
 ProductSchema.index({ name: "text", brand: "text", tags: "text" });
+ProductSchema.index({ "sale.endsAt": 1, "sale.startsAt": 1 });
 
+ProductSchema.methods.saleActive = function (now = new Date()) {
+  const s = this.sale;
+  return !!(s && s.startsAt <= now && s.endsAt > now && (s.priceUkUsed || s.priceBrandNew));
+};
+
+// Everything that charges or quotes a price goes through here, so a live
+// flash sale is honoured everywhere
 ProductSchema.methods.priceFor = function (condition) {
-  return condition === "brand-new" ? this.priceBrandNew : this.priceUkUsed;
+  const brandNew = condition === "brand-new";
+  if (this.saleActive()) {
+    const salePrice = brandNew ? this.sale.priceBrandNew : this.sale.priceUkUsed;
+    if (salePrice) return salePrice;
+  }
+  return brandNew ? this.priceBrandNew : this.priceUkUsed;
 };
 
 // Shaped to match the frontend's BuyPhone / BuyGadget types so the /buy
@@ -65,6 +96,18 @@ ProductSchema.methods.toClient = function () {
     badge: this.badge || undefined,
     inStock: this.inStock,
     isActive: this.isActive,
+    attributes: this.attributes && Object.keys(this.attributes).length ? this.attributes : undefined,
+    // Show the base price struck through next to the sale price while active
+    sale: this.sale
+      ? {
+          active: this.saleActive(),
+          priceUkUsed: this.sale.priceUkUsed || undefined,
+          priceBrandNew: this.sale.priceBrandNew || undefined,
+          startsAt: this.sale.startsAt.toISOString(),
+          endsAt: this.sale.endsAt.toISOString(),
+          label: this.sale.label,
+        }
+      : undefined,
   };
 
   if (this.type === "phone") {
@@ -80,6 +123,7 @@ ProductSchema.methods.toClient = function () {
 
   return {
     ...base,
+    category: this.category,
     gadgetCategory: this.category,
     spec: this.spec || undefined,
     tags: this.tags.length ? this.tags : undefined,

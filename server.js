@@ -33,6 +33,15 @@ const aiStatusRoutes = require("./routes/aiStatus");
 const adminPriceRoutes = require("./routes/adminPrices");
 const imeiRoutes = require("./routes/imei");
 const adminImeiRoutes = require("./routes/adminImei");
+const orderRequestRoutes = require("./routes/orderRequests");
+const adminOrderRequestRoutes = require("./routes/adminOrderRequests");
+const identityRoutes = require("./routes/identity");
+const adminIdentityRoutes = require("./routes/adminIdentity");
+const deviceRequestRoutes = require("./routes/deviceRequests");
+const adminDeviceRequestRoutes = require("./routes/adminDeviceRequests");
+const internalRoutes = require("./routes/internal");
+const categoryRoutes = require("./routes/categories");
+const adminAnnouncementRoutes = require("./routes/adminAnnouncements");
 const swaggerUi = require("swagger-ui-express");
 const swaggerSpec = require("./config/swagger");
 
@@ -126,6 +135,11 @@ app.post(
   checkoutRoutes.webhookHandler
 );
 
+// CSV uploads need more room than the 10kb every other route gets. These
+// run first; the general parser below skips bodies already parsed.
+app.use("/api/products/bulk", express.json({ limit: "2mb" }));
+app.use(["/api/vendor/inventory/bulk", "/api/vendors/inventory/bulk"], express.json({ limit: "1mb" }));
+app.use("/api/admin/imei/tac/import", express.json({ limit: "1mb" }));
 app.use(express.json({ limit: "10kb" }));
 app.use(cookieParser());
 app.use(sanitizeRequest);
@@ -150,6 +164,15 @@ app.use("/api/me", meRoutes);
 app.use("/api/admin/prices", adminPriceRoutes);
 app.use("/api/admin/imei", adminImeiRoutes);
 app.use("/api/imei", imeiRoutes);
+app.use("/api/admin/order-requests", adminOrderRequestRoutes);
+app.use("/api/order-requests", orderRequestRoutes);
+app.use("/api/admin/identity", adminIdentityRoutes);
+app.use("/api/identity", identityRoutes);
+app.use("/api/admin/requests", adminDeviceRequestRoutes);
+app.use("/api/requests", deviceRequestRoutes);
+app.use("/api/internal", internalRoutes);
+app.use("/api/categories", categoryRoutes);
+app.use("/api/admin/announcements", adminAnnouncementRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/uploads", uploadRoutes);
 app.use("/api/notifications", notificationRoutes);
@@ -191,6 +214,12 @@ connectDB().then(async () => {
   } catch (err) {
     // Valuation falls back to the bundled JSON prices until this succeeds
     console.error("Could not load valuation devices:", err.message);
+  }
+  try {
+    const added = await require("./utils/categories").ensureDefaultCategories();
+    if (added) console.log(`Added ${added} default product categories`);
+  } catch (err) {
+    console.error("Could not create default categories:", err.message);
   }
   app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 });

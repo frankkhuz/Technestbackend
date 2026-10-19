@@ -476,6 +476,187 @@ quota. New `type` values: `listing_update` (your listing was approved or
 rejected, with the reason) and `account_update` (vendor application approved
 or rejected). Admins can send `{ reason }` when rejecting a vendor.
 
+## 15. Checkout: WhatsApp now, online payment "coming soon"
+
+Show two buttons at checkout (cart and marketplace listings):
+
+- **Chat with us on WhatsApp** — `POST /api/order-requests` with
+  `{ items: [{ itemId, quantity, condition }] }` (cart) **or** `{ listingId }`,
+  plus `buyerName`, `buyerPhone`, optional `buyerEmail`, `state`, `note`.
+  Works for guests. Returns `data.request` (with a reference like
+  `TN-7K3QXP`) and **`data.whatsappUrl` — open it**; the message already
+  lists the items, total and reference. Prices come from the server (flash
+  sale prices included).
+- **Pay on platform** — `GET /api/order-requests/options` returns
+  `online: { enabled: false, label: "Coming soon" }`. Show the button
+  disabled with that label. It turns on when the backend sets
+  `ONLINE_PAYMENTS=on`.
+
+Logged-in buyers see their orders at `GET /api/order-requests/mine` (each
+with `whatsappUrl` to reopen the chat). Status: `new` → `in_progress` →
+`completed` / `cancelled`; buyers are notified of each change.
+
+**Admin page "WhatsApp orders":** `GET /api/admin/order-requests?status=&q=`
+(with counts) and `PATCH /api/admin/order-requests/:id { status, adminNotes }`.
+Moving a listing order to `in_progress` **holds the listing for 48 hours**
+(send `in_progress` again to extend) and tells the seller; `completed` marks
+it sold and closes other requests on it; `cancelled` releases the hold.
+
+**Held listings:** every listing now has `isReserved` and `isAvailable`.
+Show a "Reserved" badge, or use `GET /api/listings?available=true` to hide
+them. Buy/swap requests, checkout and vendor offers on a held listing get
+`409` with a friendly message. Holds expire by themselves.
+
+## 16. Identity check ("verified seller") — free, no NIN fee
+
+1. Upload the ID photo and a selfie **privately**:
+   `POST /api/uploads/signature { purpose: "private" }` returns
+   `type: "authenticated"` and a private folder. Include `type=authenticated`
+   in the Cloudinary upload form and keep the returned **`public_id`** (the
+   URL won't open publicly — that's the point).
+2. `POST /api/identity { fullName, idType, idDocumentId, selfieId, bankCode, bankName, accountNumber }`
+   (`idType`: `nin_slip`, `drivers_licence`, `international_passport`,
+   `voters_card`; banks from `GET /api/payout-account/banks`). The backend
+   checks the bank account exists and compares its name with the ID name.
+3. `GET /api/identity` shows `status` (none, pending, verified, rejected,
+   with `rejectionReason`). Rejected users can submit again.
+
+Approved users get `identityVerified: true` — it's on `GET /api/me` and on
+each listing's `owner`. Show a **"Verified seller"** badge.
+
+**Admin page "Identity checks":** `GET /api/admin/identity?status=pending`
+gives signed links to the ID photo and selfie, the bank's account name and
+`nameMatch` (match / partial / mismatch / unchecked). `PATCH
+/api/admin/identity/:userId { status: verified | rejected, reason }`.
+
+## 17. Vendor onboarding: types, coverage, CAC
+
+`PATCH /api/vendor/verify` now also takes `businessName`, `vendorTypes`
+(`phone_dealer`, `gadgets`, `accessories`, `repairs`), `brands`, `states`
+(Nigerian states served — empty means nationwide), `city`, `repairServices`
+(ids from `GET /api/repair-triage/services`) and `cacCertificateId` (a
+private upload's `public_id`). `businessRegNumber` must look like `RC1234567`
+or `BN1234567`. These decide which customer requests reach the vendor, so
+make them checkboxes on the vendor form. Old vendors without types count as
+phone dealers.
+
+The admin pending-vendors list now includes `cacCertificateUrl` (signed
+link) and the vendor's identity status. Vendors can also bulk-upload stock
+(section 19).
+
+`GET /api/vendors/directory?type=repairs&state=Lagos` lists approved vendors
+(name, types, states, brands — no phone numbers; TechNest arranges deals).
+
+## 18. Customer requests and vendor offers (smart vendor matching)
+
+Instead of TechNest staff calling round, a customer posts a request and it
+goes to matching vendors only.
+
+**Customer:**
+
+- `POST /api/requests` with `type` (buy, sell, swap, repair, accessory),
+  `category` (phone, laptop, tablet, wearable, gaming, audio, camera,
+  accessory, other), `deviceName`, `state`, and as relevant `storage`,
+  `condition`, `wantedDevice` (swap, required), `issue` (repair, required),
+  `repairServiceId`, `budgetMin`/`budgetMax`, `images`, `city`,
+  `snapchatStatus`, `imei` (sell/swap — checked against stolen reports),
+  `autoSelect`, `hours` (how long vendors have, default 72).
+  Returns `matchedVendors` (how many vendors got it). The customer gets an
+  automatic confirmation in-app and by email.
+- `GET /api/requests` and `GET /api/requests/:id` — offers come back
+  **best first** with `recommended: true` on the top one, plus
+  `vendorVerified` and `vendorCompletedDeals`. Contacts are never shown.
+- `POST /api/requests/:id/offers/:offerId/accept` — returns `whatsappUrl`
+  to chat with TechNest, who arrange the deal.
+- `POST /api/requests/:id/cancel`.
+- With `autoSelect: true`, the best offer is accepted automatically when the
+  request closes. **The rule:** best price wins (lowest, or highest for
+  sell requests); ties go to the vendor with more completed deals, then the
+  earlier offer.
+
+**Vendor** (approved only):
+
+- `GET /api/requests/for-vendor?status=open` — requests matched to them.
+- `POST /api/requests/:id/offers { price, message, eta, warrantyDays }`
+  (send again to update), `DELETE /api/requests/:id/offers` to withdraw.
+  Bidding is blind: vendors see how many offers exist, not the prices.
+- `price` means: buy/accessory — what the customer pays; repair — the repair
+  cost; sell — what the vendor pays; swap — the top-up the customer pays.
+
+**Matching:** vendor type fits the request, the vendor serves that state (or
+is nationwide), and it's ranked by stock held, being local, brand and repair
+service. Up to 40 vendors are notified; the top 10 by email.
+
+**Admin page "Requests":** `GET /api/admin/requests?status=&unmatched=true`,
+`PATCH /api/admin/requests/:id { status: completed | cancelled, adminNotes }`,
+and `POST /api/admin/requests/:id/match` to match again after onboarding a
+vendor (requests nobody matched alert admins).
+
+New notification types: `device_request`, `offer_received`,
+`offer_accepted`, `offer_update`, `order_request`, `identity_update`,
+`announcement`, `admin_alert`. Notifications may carry `orderRequest` and
+`deviceRequest` ids to link to.
+
+## 19. Categories, filters, bulk upload, flash sale
+
+**Categories:** `GET /api/categories` returns the menu tree (Phones, Laptops,
+Tablets, Smartwatches, Gaming → consoles / gaming PCs / controllers /
+accessories / games, Audio → headphones / speakers / microphones, Cameras &
+CCTV, Smart glasses, Projectors, Power & electrical → power banks / power
+stations / solar / extensions / UPS, Networking, Accessories). Existing
+catalog categories are unchanged.
+
+`GET /api/categories/:slug` returns that category's **own filters with
+counts** — build the filter sidebar from `filters.attributes`:
+
+- select / multiselect / boolean: `options: [{ value, count }]` → send
+  `a.<key>=value` (comma-separate for "any of")
+- number: `min`, `max` → send `a.<key>_min` / `a.<key>_max`
+- plus `brands`, `price` range and `children` (subcategories)
+
+`GET /api/products?category=headphones&a.connectivity=Wireless&a.noiseCancelling=true&minPrice=&maxPrice=`
+— a group slug (e.g. `audio`) includes its subcategories. Products now carry
+`attributes`.
+
+Admins add or edit categories and their filters with
+`POST /api/categories/admin` and `PATCH /api/categories/admin/:slug` — new
+categories appear without a deploy. Product create/edit takes `attributes`
+and checks them against the category.
+
+**Bulk upload:** `POST /api/products/bulk { csv, dryRun }` (admin, up to
+1,000 rows) — columns `name, type, brand, category, priceUkUsed,
+priceBrandNew, storage, colors, tags (| separated), ram, spec, badge, image,
+inStock`; any other column is a filter for that category. Show the dry-run
+result table (`rows[]` with an error per bad row), then upload for real.
+Vendors: `POST /api/vendor/inventory/bulk { csv, dryRun }` with
+`deviceName, buyPrice, sellPrice, condition, storage, category, quantity`.
+
+**Flash sale:** products have `sale: { active, priceUkUsed, priceBrandNew,
+startsAt, endsAt, label }` — when `active`, show the sale price with the
+normal price struck through. `GET /api/products/flash-sale` returns live
+sale items (ending soonest first), `upcoming` ones, and `serverTime` for the
+countdown. `GET /api/products?onSale=true` filters the catalog. Admins:
+`PATCH /api/products/:id { sale: {...} }` or
+`POST /api/products/flash-sale { slugs, percentOff, startsAt?, endsAt, label }`,
+and `DELETE /api/products/flash-sale` to end. Sale prices are used
+automatically wherever prices are worked out.
+
+## 20. Announcements, Snapchat check, maintenance tick
+
+- **Announcements (admin):** `POST /api/admin/announcements { audience,
+  title, message, sendEmail, dryRun }` — audiences `all_vendors`,
+  `approved_vendors`, `pending_vendors`, `customers`, `everyone`. In-app for
+  everyone; emails go out in the background (capped at 200 per send to fit
+  the free email quota). `GET` shows progress.
+- **Snapchat:** listings and requests take `snapchatStatus` (`works`,
+  `banned`, `unknown`). Ask "Does Snapchat work on this phone?" on the sell
+  form. Admins see a flag when it's banned.
+- **Maintenance tick:** set `INTERNAL_CRON_SECRET` and point a free
+  scheduler (cron-job.org) at `POST <backend>/api/internal/tick` every 10
+  minutes with header `X-Cron-Secret: <secret>`. It closes expired requests
+  on time (auto-picking offers) and keeps the free Render server awake.
+  Everything still works without it.
+
 ---
 
 ## Checklist
@@ -503,6 +684,14 @@ or rejected). Admins can send `{ reason }` when rejecting a vendor.
 - [ ] Handle `403 code: "email_not_verified"` with a "Resend link" button; "Confirm your email" banner while `isVerified` is false
 - [ ] Login page toasts for `?verified=success` / `?verified=invalid`; "Forgot password?" link
 - [ ] New `/reset-password` page (section 14)
+- [ ] Checkout: "Chat with us on WhatsApp" + disabled "Pay on platform — Coming soon"; "My orders" (section 15)
+- [ ] "Reserved" badge on held listings (`isReserved`)
+- [ ] "Get verified" page with private uploads; "Verified seller" badge (section 16)
+- [ ] Vendor form: business name, types, states, brands, repair services, CAC upload (section 17)
+- [ ] "Post a request" flow, offers list with "Recommended", accept; vendor "Requests" inbox with offer form (section 18)
+- [ ] Category menu from `/api/categories`; per-category filter sidebar; flash sale strip + countdown (section 19)
+- [ ] Admin: WhatsApp orders, identity checks, requests, categories editor, bulk upload, flash sale, announcements
+- [ ] "Does Snapchat work on this phone?" on the sell form
 
 ## Backend setup (for whoever deploys it)
 
@@ -520,6 +709,9 @@ EMAIL_PROVIDER=brevo                         # brevo or resend; leave the three 
 EMAIL_API_KEY=xkeysib-...                    # from the provider's dashboard
 EMAIL_FROM=you@yourdomain.com                # Brevo: a verified sender (a Gmail works); Resend: an address on a verified domain
 EMAIL_FROM_NAME=TechNest                     # optional
+INTERNAL_CRON_SECRET=<random string>         # optional: enables POST /api/internal/tick (section 20)
+ONLINE_PAYMENTS=on                           # optional: only when online payment should go live (needs PAYSTACK_SECRET_KEY)
+ANNOUNCEMENT_EMAIL_LIMIT=200                 # optional: max emails per announcement
 ```
 
 ```

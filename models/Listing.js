@@ -48,6 +48,13 @@ const ListingSchema = new mongoose.Schema(
       default: null,
     },
     repairs: { type: [String], default: [] },
+    // Snapchat bans some devices outright; no API can check it, so the
+    // seller declares it and the vendor confirms at inspection
+    snapchatStatus: {
+      type: String,
+      enum: ["works", "banned", "unknown"],
+      default: "unknown",
+    },
     description: { type: String, trim: true, maxlength: 1000, default: null },
 
     // Media — Cloudinary URLs only, never raw image data. mediaCount is
@@ -115,6 +122,11 @@ const ListingSchema = new mongoose.Schema(
     },
     rejectionReason: { type: String, maxlength: 300, default: null },
 
+    // Held for one buyer while TechNest arranges the deal (see
+    // utils/availability.js). Expires by itself — no job needs to clear it.
+    reservedUntil: { type: Date, default: null },
+    reservedFor: { type: mongoose.Schema.Types.ObjectId, ref: "OrderRequest", default: null },
+
     // Latest AI review for admins (optional — only when AI is available)
     aiReview: {
       type: {
@@ -127,8 +139,16 @@ const ListingSchema = new mongoose.Schema(
       default: null,
     },
   },
-  { timestamps: true }
+  { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );
+
+// What the marketplace should show: only active listings nobody holds
+ListingSchema.virtual("isReserved").get(function () {
+  return !!(this.reservedUntil && this.reservedUntil > new Date());
+});
+ListingSchema.virtual("isAvailable").get(function () {
+  return this.status === "active" && !this.isReserved;
+});
 
 ListingSchema.index({ deviceName: "text", deviceCategory: "text" });
 ListingSchema.index({ status: 1, createdAt: -1 });

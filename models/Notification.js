@@ -33,6 +33,12 @@ const NotificationSchema = new mongoose.Schema(
         "listing_removed",
         "listing_update",
         "account_update",
+        "order_request",
+        "identity_update",
+        "device_request",
+        "offer_update",
+        "announcement",
+        "admin_alert",
       ],
       required: true,
     },
@@ -51,6 +57,16 @@ const NotificationSchema = new mongoose.Schema(
     order: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Order",
+      default: null,
+    },
+    orderRequest: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "OrderRequest",
+      default: null,
+    },
+    deviceRequest: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "DeviceRequest",
       default: null,
     },
     // read status is per-recipient for targeted notifications, but for

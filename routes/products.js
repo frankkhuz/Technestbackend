@@ -5,6 +5,9 @@ const { verifyCsrfToken } = require("../middleware/csrf");
 const { sendSuccess, sendError } = require("../utils/response");
 const { parseQueryRules, findProducts, describeFilters, knownBrands, CATEGORY_WORDS } = require("../utils/productSearch");
 const aiSoftLimit = require("../utils/aiSoftLimit");
+const Category = require("../models/Category");
+const { expandCategory, validateAttributes, attributeFilter } = require("../utils/categories");
+const { parseCsvWithHeader, splitList, parseBool } = require("../utils/csv");
 const ai = require("../utils/ai");
 const router = express.Router();
 
@@ -29,7 +32,21 @@ const findProduct = (idOrSlug) => {
  *         schema: { type: string, enum: [phone, gadget] }
  *       - in: query
  *         name: category
- *         description: Phone tier (flagship, mid-range, budget) or gadget category (camera, watch, ...)
+ *         description: "Category slug from GET /api/categories. A group (e.g. audio, gaming) includes its subcategories"
+ *         schema: { type: string }
+ *       - in: query
+ *         name: a.<key>
+ *         description: "Category filters, from GET /api/categories/{slug} → filters.attributes[].param — e.g. a.connectivity=Wireless, a.type=Over-ear,On-ear (any of), a.noiseCancelling=true, a.capacity_min=10000"
+ *         schema: { type: string }
+ *       - in: query
+ *         name: minPrice
+ *         schema: { type: number }
+ *       - in: query
+ *         name: maxPrice
+ *         schema: { type: number }
+ *       - in: query
+ *         name: onSale
+ *         description: "true = only products in a live flash sale"
  *         schema: { type: string }
  *       - in: query
  *         name: brand
@@ -63,7 +80,22 @@ router.get("/", async (req, res, next) => {
 
     const filter = { isActive: true };
     if (type === "phone" || type === "gadget") filter.type = type;
-    if (typeof category === "string" && category) filter.category = category;
+    if (typeof category === "string" && category) {
+      // A group (e.g. "audio") includes its children; a.<key> filters use
+      // the category's own attributes (see GET /api/categories/{slug})
+      const cat = await Category.findOne({ slug: category.toLowerCase() });
+      filter.category = cat ? { $in: await expandCategory(cat.slug) } : category;
+      if (cat) Object.assign(filter, attributeFilter(cat, req.query));
+    }
+    const priceField = condition === "brand-new" ? "priceBrandNew" : "priceUkUsed";
+    const minPrice = Number(req.query.minPrice);
+    const maxPrice = Number(req.query.maxPrice);
+    if (minPrice > 0 || maxPrice > 0)
+      filter[priceField] = { ...(minPrice > 0 ? { $gte: minPrice } : {}), ...(maxPrice > 0 ? { $lte: maxPrice } : {}) };
+    if (req.query.onSale === "true") {
+      const now = new Date();
+      Object.assign(filter, { "sale.startsAt": { $lte: now }, "sale.endsAt": { $gt: now } });
+    }
     if (typeof brand === "string" && brand && brand !== "all")
       filter.brand = new RegExp(`^${escapeRegex(brand)}$`, "i");
     if (typeof q === "string" && q.trim()) {
@@ -71,7 +103,6 @@ router.get("/", async (req, res, next) => {
       filter.$or = [{ name: rx }, { brand: rx }, { tags: rx }];
     }
 
-    const priceField = condition === "brand-new" ? "priceBrandNew" : "priceUkUsed";
     const sortSpec =
       sort === "price-asc"
         ? { [priceField]: 1 }
@@ -230,6 +261,35 @@ router.get("/search", aiSoftLimit, async (req, res, next) => {
  *       404:
  *         description: Product not found
  */
+/**
+ * @swagger
+ * /api/products/flash-sale:
+ *   get:
+ *     summary: Products in a live flash sale, ending soonest first
+ *     description: "Each product has sale: { active, priceUkUsed, priceBrandNew, endsAt, label }. Use data.serverTime for the countdown so it doesn't depend on the phone's clock. data.upcoming lists sales starting in the next 7 days."
+ *     tags: [Products]
+ *     security: []
+ *     responses:
+ *       200:
+ *         description: "data: { products, upcoming, serverTime }"
+ */
+router.get("/flash-sale", async (req, res, next) => {
+  try {
+    const now = new Date();
+    const [live, upcoming] = await Promise.all([
+      Product.find({ isActive: true, "sale.startsAt": { $lte: now }, "sale.endsAt": { $gt: now } }).sort({ "sale.endsAt": 1 }).limit(100),
+      Product.find({ isActive: true, "sale.startsAt": { $gt: now, $lte: new Date(now.getTime() + 7 * 864e5) } }).sort({ "sale.startsAt": 1 }).limit(50),
+    ]);
+    sendSuccess(res, 200, "Flash sale fetched", {
+      products: live.filter((p) => p.saleActive(now)).map((p) => p.toClient()),
+      upcoming: upcoming.map((p) => p.toClient()),
+      serverTime: now.toISOString(),
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.get("/:id", async (req, res, next) => {
   try {
     const product = await findProduct(req.params.id);
@@ -259,6 +319,8 @@ const EDITABLE_FIELDS = [
   "priceBrandNew",
   "inStock",
   "isActive",
+  "attributes",
+  "sale",
 ];
 
 const pickEditable = (body) => {
@@ -270,6 +332,234 @@ const pickEditable = (body) => {
   if (body.color !== undefined && out.colors === undefined) out.colors = body.color;
   return out;
 };
+
+/**
+ * Checks a sale against the product's normal prices.
+ * @returns {{ sale }} normalized (null = no sale) or {{ error }}
+ */
+const validateSale = (sale, { priceUkUsed, priceBrandNew }) => {
+  if (sale === null) return { sale: null };
+  if (typeof sale !== "object") return { error: "sale must be an object or null" };
+  const startsAt = sale.startsAt ? new Date(sale.startsAt) : new Date();
+  const endsAt = new Date(sale.endsAt);
+  if (isNaN(startsAt) || isNaN(endsAt)) return { error: "Sale needs a valid endsAt (and optional startsAt) date" };
+  if (endsAt <= startsAt) return { error: "The sale must end after it starts" };
+  const price = (v) => (v === undefined || v === null || v === "" ? null : Math.round(Number(v)));
+  const uk = price(sale.priceUkUsed);
+  const bn = price(sale.priceBrandNew);
+  if (!uk && !bn) return { error: "Give a sale price for UK used and/or brand new" };
+  if ((uk !== null && !(uk > 0 && uk < priceUkUsed)) || (bn !== null && !(bn > 0 && bn < priceBrandNew)))
+    return { error: "Sale prices must be above 0 and below the normal price" };
+  return { sale: { priceUkUsed: uk, priceBrandNew: bn, startsAt, endsAt, label: String(sale.label || "Flash Sale").slice(0, 30) } };
+};
+
+// Category must exist, attributes must fit it, and a sale must undercut the
+// normal price. Mutates and returns fields, or returns { error }.
+const checkProductFields = async (fields, current = null) => {
+  const categorySlug = String(fields.category ?? current?.category ?? "").toLowerCase();
+  const category = await Category.findOne({ slug: categorySlug });
+  if (!category) return { error: `Unknown category "${categorySlug}". See GET /api/categories.` };
+  if (fields.category !== undefined) fields.category = category.slug;
+  if (fields.attributes !== undefined || (fields.category !== undefined && fields.category !== current?.category)) {
+    const checked = validateAttributes(category, fields.attributes ?? current?.attributes ?? {});
+    if (checked.error) return { error: checked.error };
+    fields.attributes = checked.attributes;
+  }
+  if (fields.sale !== undefined) {
+    const checked = validateSale(fields.sale, {
+      priceUkUsed: fields.priceUkUsed ?? current?.priceUkUsed,
+      priceBrandNew: fields.priceBrandNew ?? current?.priceBrandNew,
+    });
+    if (checked.error) return { error: checked.error };
+    fields.sale = checked.sale;
+  }
+  return { fields };
+};
+
+const slugify = (s) =>
+  String(s || "").toLowerCase().replace(/\+/g, " plus ").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 100);
+
+const PRODUCT_COLUMNS = new Set(["slug", "type", "name", "brand", "category", "priceukused", "pricebrandnew", "storage", "colors", "ram", "spec", "badge", "tags", "image", "instock"]);
+
+/**
+ * @swagger
+ * /api/products/bulk:
+ *   post:
+ *     summary: Admin — add or update many products from a CSV
+ *     description: >
+ *       Header row required. Columns: slug (optional — made from the name),
+ *       type (phone | gadget), name, brand, category (slug),
+ *       priceUkUsed, priceBrandNew, storage / colors / tags (separate values
+ *       with |), ram, spec, badge, image, inStock (yes/no). Any other column
+ *       is read as a filter for that row's category, e.g. connectivity,
+ *       noiseCancelling. Rows whose slug exists are updated (blank cells are
+ *       left alone). Send `dryRun: true` first to see what would happen.
+ *       Up to 1,000 rows (2 MB) per upload.
+ *     tags: [Products]
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [csv]
+ *             properties:
+ *               csv: { type: string }
+ *               dryRun: { type: boolean }
+ *     responses:
+ *       200:
+ *         description: "data: { created, updated, failed, dryRun, rows: [{ line, slug, action: create | update | error, error? }] }"
+ */
+router.post("/bulk", protect, restrictTo("admin"), verifyCsrfToken, async (req, res, next) => {
+  try {
+    const { rows } = parseCsvWithHeader(req.body.csv);
+    if (!rows.length) return sendError(res, 400, "The CSV needs a header row and at least one product.");
+    if (rows.length > 1000) return sendError(res, 400, "Upload at most 1,000 rows at a time.");
+    const dryRun = req.body.dryRun === true;
+
+    const categories = new Map((await Category.find()).map((c) => [c.slug, c]));
+    const slugs = rows.map((r) => slugify(r.values.slug || r.values.name));
+    const existing = new Map((await Product.find({ slug: { $in: slugs } })).map((p) => [p.slug, p]));
+    const results = [];
+    const ops = [];
+
+    for (const [i, { line, values: v }] of rows.entries()) {
+      const slug = slugs[i];
+      const fail = (error) => results.push({ line, slug: slug || undefined, action: "error", error });
+      if (!slug) { fail("Needs a name or slug"); continue; }
+      if (results.some((r) => r.slug === slug && r.action !== "error")) { fail("This slug appears twice in the file"); continue; }
+      const current = existing.get(slug);
+
+      const fields = {};
+      const text = (k, f = k) => { if (v[k]) fields[f] = v[k]; };
+      text("type"); text("name"); text("brand"); text("ram"); text("spec"); text("badge"); text("image");
+      if (v.category) fields.category = v.category.toLowerCase();
+      for (const [col, f] of [["priceukused", "priceUkUsed"], ["pricebrandnew", "priceBrandNew"]])
+        if (v[col]) fields[f] = Number(String(v[col]).replace(/[₦,\s]/g, ""));
+      for (const [col, f] of [["storage", "storage"], ["colors", "colors"], ["tags", "tags"]]) if (v[col]) fields[f] = splitList(v[col]);
+      if (v.instock) fields.inStock = parseBool(v.instock);
+
+      const merged = { ...(current ? current.toObject() : {}), ...fields };
+      if (!current && (!merged.type || !merged.name || !merged.brand || !merged.category || !(merged.priceUkUsed >= 0) || !(merged.priceBrandNew >= 0))) {
+        fail("New products need type, name, brand, category, priceUkUsed and priceBrandNew"); continue;
+      }
+      if (!["phone", "gadget"].includes(merged.type)) { fail('type must be "phone" or "gadget"'); continue; }
+      if ([merged.priceUkUsed, merged.priceBrandNew].some((n) => !Number.isFinite(n) || n < 0)) { fail("Prices must be numbers"); continue; }
+      const category = categories.get(merged.category);
+      if (!category) { fail(`Unknown category "${merged.category}"`); continue; }
+
+      // Extra columns are this category's filters (header names are lower-cased)
+      const byLower = new Map(category.attributes.map((a) => [a.key.toLowerCase(), a.key]));
+      const attrInput = {};
+      let unknown = null;
+      for (const [col, val] of Object.entries(v)) {
+        if (PRODUCT_COLUMNS.has(col) || val === "") continue;
+        if (!byLower.has(col)) { unknown = col; break; }
+        attrInput[byLower.get(col)] = val;
+      }
+      if (unknown) { fail(`"${unknown}" isn't a column or a filter for ${category.name}`); continue; }
+      if (Object.keys(attrInput).length || fields.category) {
+        const checked = validateAttributes(category, { ...(fields.category && fields.category !== current?.category ? {} : current?.attributes || {}), ...attrInput });
+        if (checked.error) { fail(checked.error); continue; }
+        fields.attributes = checked.attributes;
+      }
+
+      results.push({ line, slug, action: current ? "update" : "create" });
+      ops.push(current
+        ? { updateOne: { filter: { slug }, update: { $set: fields } } }
+        : { insertOne: { document: { inStock: true, isActive: true, storage: [], colors: [], tags: [], attributes: {}, ...fields, slug } } });
+    }
+
+    if (!dryRun && ops.length) await Product.bulkWrite(ops, { ordered: false });
+    const count = (a) => results.filter((r) => r.action === a).length;
+    sendSuccess(res, 200, dryRun ? "Preview — nothing saved" : "Products uploaded", {
+      created: count("create"),
+      updated: count("update"),
+      failed: count("error"),
+      dryRun,
+      rows: results,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * @swagger
+ * /api/products/flash-sale:
+ *   post:
+ *     summary: Admin — put several products on flash sale at once
+ *     description: Give `percentOff` (prices rounded to the nearest ₦100) or exact prices per product via PATCH /api/products/{id} { sale }.
+ *     tags: [Products]
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [slugs, percentOff, endsAt]
+ *             properties:
+ *               slugs: { type: array, items: { type: string } }
+ *               percentOff: { type: number, example: 15 }
+ *               startsAt: { type: string, format: date-time, description: "Default: now" }
+ *               endsAt: { type: string, format: date-time }
+ *               label: { type: string, example: Flash Sale }
+ *     responses:
+ *       200:
+ *         description: "data: { updated, notFound }"
+ *   delete:
+ *     summary: Admin — end the flash sale on these products now
+ *     tags: [Products]
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               slugs: { type: array, items: { type: string }, description: "Omit to end every sale" }
+ *     responses:
+ *       200:
+ *         description: data.ended
+ */
+router.post("/flash-sale", protect, restrictTo("admin"), verifyCsrfToken, async (req, res, next) => {
+  try {
+    const slugs = (Array.isArray(req.body.slugs) ? req.body.slugs : []).map((s) => String(s).toLowerCase());
+    const pct = Number(req.body.percentOff);
+    if (!slugs.length) return sendError(res, 400, "Choose at least one product.");
+    if (!(pct > 0 && pct < 90)) return sendError(res, 400, "percentOff must be between 1 and 89.");
+    const products = await Product.find({ slug: { $in: slugs } });
+    const round = (n) => Math.max(100, Math.round(n / 100) * 100);
+    for (const p of products) {
+      const checked = validateSale(
+        { priceUkUsed: round(p.priceUkUsed * (1 - pct / 100)), priceBrandNew: round(p.priceBrandNew * (1 - pct / 100)), startsAt: req.body.startsAt, endsAt: req.body.endsAt, label: req.body.label },
+        p
+      );
+      if (checked.error) return sendError(res, 400, `${p.name}: ${checked.error}`);
+      p.sale = checked.sale;
+    }
+    await Promise.all(products.map((p) => p.save()));
+    const found = new Set(products.map((p) => p.slug));
+    sendSuccess(res, 200, "Flash sale set", { updated: products.length, notFound: slugs.filter((s) => !found.has(s)) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.delete("/flash-sale", protect, restrictTo("admin"), verifyCsrfToken, async (req, res, next) => {
+  try {
+    const slugs = Array.isArray(req.body?.slugs) ? req.body.slugs.map((s) => String(s).toLowerCase()) : null;
+    const result = await Product.updateMany(slugs ? { slug: { $in: slugs } } : { sale: { $ne: null } }, { sale: null });
+    sendSuccess(res, 200, "Flash sale ended", { ended: result.modifiedCount });
+  } catch (err) {
+    next(err);
+  }
+});
 
 /**
  * @swagger
@@ -334,6 +624,8 @@ router.post(
 
       if (await Product.exists({ slug: String(slug).toLowerCase() }))
         return sendError(res, 409, "A product with that slug already exists");
+      const checked = await checkProductFields(fields);
+      if (checked.error) return sendError(res, 400, checked.error);
 
       const product = await Product.create({ ...fields, slug });
       sendSuccess(res, 201, "Product created", { product: product.toClient() });
@@ -373,7 +665,11 @@ router.patch(
       const product = await findProduct(req.params.id);
       if (!product) return sendError(res, 404, "Product not found");
 
-      Object.assign(product, pickEditable(req.body));
+      const fields = pickEditable(req.body);
+      const checked = await checkProductFields(fields, product);
+      if (checked.error) return sendError(res, 400, checked.error);
+      Object.assign(product, fields);
+      product.markModified("attributes");
       await product.save();
       sendSuccess(res, 200, "Product updated", { product: product.toClient() });
     } catch (err) {

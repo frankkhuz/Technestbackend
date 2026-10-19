@@ -54,4 +54,10 @@ const notifyVendors = async (fields) => {
   await notify(vendors.map((v) => ({ ...fields, recipient: v._id, email: false })));
 };
 
-module.exports = { notify, notifyVendors };
+/** Tells every admin (in-app + email) — for things staff must act on. */
+const notifyAdmins = async (fields) => {
+  const admins = await User.find({ userType: "admin" }).select("_id");
+  await notify(admins.map((a) => ({ ...fields, recipient: a._id })));
+};
+
+module.exports = { notify, notifyVendors, notifyAdmins };
