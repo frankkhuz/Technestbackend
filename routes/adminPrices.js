@@ -15,6 +15,9 @@ const {
   CATALOG_MAP,
 } = require("../utils/marketPricing");
 const ai = require("../utils/ai");
+const Listing = require("../models/Listing");
+const Transaction = require("../models/Transaction");
+const { findMarketDevice } = require("../utils/listingChecks");
 const router = express.Router();
 
 // Every route: logged-in admin
@@ -604,6 +607,94 @@ router.post("/apply", verifyCsrfToken, async (req, res, next) => {
     const out = summary(plan);
     if (req.body.updateCatalog === false) out.catalog = [];
     sendSuccess(res, 200, "Prices updated", out);
+  } catch (err) {
+    next(err);
+  }
+});
+
+const median = (xs) => {
+  const s = [...xs].sort((a, b) => a - b);
+  const m = Math.floor(s.length / 2);
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+};
+
+/**
+ * @swagger
+ * /api/admin/prices/accuracy:
+ *   get:
+ *     summary: How close our estimates are to what vendors really pay, per device
+ *     description: >
+ *       Compares each listing's estimate (the price range from the valuation
+ *       form) with vendor offers on it and the prices sellers accepted.
+ *       `ratio` 0.85 means vendors pay about 15% under our estimate. Devices
+ *       with 3+ accepted deals that are 10%+ off get a `suggestion` — fix
+ *       the base price in the devices table. Only listings from the last
+ *       `days` (default 180) count.
+ *     tags: [Admin — Prices]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: days
+ *         schema: { type: integer, default: 180 }
+ *     responses:
+ *       200:
+ *         description: "data: { overall: { deals, dealRatio, offers, offerRatio }, devices: [{ deviceId, name, deals, dealRatio, offers, offerRatio, suggestion }] }"
+ */
+router.get("/accuracy", async (req, res, next) => {
+  try {
+    const days = Math.min(730, Math.max(7, parseInt(req.query.days) || 180));
+    const since = new Date(Date.now() - days * 864e5);
+    const listings = await Listing.find({ createdAt: { $gte: since }, estimatedMax: { $gt: 0 } })
+      .select("deviceName storage estimatedMin estimatedMax bids");
+    const deals = await Transaction.find({
+      type: "sell",
+      status: { $in: ["accepted", "completed"] },
+      agreedPrice: { $gt: 0 },
+      listing: { $in: listings.map((l) => l._id) },
+    }).select("listing agreedPrice");
+    const dealByListing = new Map(deals.map((d) => [String(d.listing), d.agreedPrice]));
+
+    // Group by the valuation device each listing matches (else by its name)
+    const groups = new Map();
+    for (const l of listings) {
+      const estimate = (l.estimatedMin + l.estimatedMax) / 2;
+      const device = findMarketDevice(l);
+      const key = device ? device.id : `name:${normalizeDeviceName(l.deviceName)}`;
+      const g = groups.get(key) || { deviceId: device?.id || null, name: device ? `${device.name} ${device.storage}`.trim() : l.deviceName, deals: [], offers: [] };
+      for (const b of l.bids || []) if (b.amount > 0) g.offers.push(b.amount / estimate);
+      const agreed = dealByListing.get(String(l._id));
+      if (agreed) g.deals.push(agreed / estimate);
+      groups.set(key, g);
+    }
+
+    const round2 = (x) => (x === null ? null : Math.round(x * 100) / 100);
+    const devices = [...groups.values()]
+      .filter((g) => g.deals.length || g.offers.length)
+      .map((g) => {
+        const dealRatio = g.deals.length ? median(g.deals) : null;
+        const offerRatio = g.offers.length ? median(g.offers) : null;
+        let suggestion = null;
+        if (g.deals.length >= 3 && Math.abs(dealRatio - 1) >= 0.1)
+          suggestion = dealRatio < 1
+            ? `Deals close about ${Math.round((1 - dealRatio) * 100)}% under our estimate — consider lowering this device's base price.`
+            : `Deals close about ${Math.round((dealRatio - 1) * 100)}% over our estimate — consider raising this device's base price.`;
+        return { deviceId: g.deviceId, name: g.name, deals: g.deals.length, dealRatio: round2(dealRatio), offers: g.offers.length, offerRatio: round2(offerRatio), suggestion };
+      })
+      .sort((a, b) => (b.suggestion ? 1 : 0) - (a.suggestion ? 1 : 0) || b.deals - a.deals || b.offers - a.offers);
+
+    const allDeals = [...groups.values()].flatMap((g) => g.deals);
+    const allOffers = [...groups.values()].flatMap((g) => g.offers);
+    sendSuccess(res, 200, "Accuracy report", {
+      days,
+      overall: {
+        deals: allDeals.length,
+        dealRatio: allDeals.length ? round2(median(allDeals)) : null,
+        offers: allOffers.length,
+        offerRatio: allOffers.length ? round2(median(allOffers)) : null,
+      },
+      devices,
+    });
   } catch (err) {
     next(err);
   }

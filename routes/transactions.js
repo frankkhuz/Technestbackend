@@ -126,6 +126,7 @@ const buildSwapQuote = (listing, offeredDevice) => {
   const valuation = calculateValuation(offeredDevice);
   if (!valuation)
     return { error: "We couldn't value that device — pick one from the list or enter a price." };
+  if (valuation.blocked) return { error: valuation.blocked };
 
   const offeredValuation = midpoint(valuation.minVal, valuation.maxVal);
   const targetMid = midpoint(listing.estimatedMin, listing.estimatedMax);

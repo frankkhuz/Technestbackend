@@ -56,6 +56,7 @@ const sendText = async (to, body) => {
       `https://graph.facebook.com/${apiVersion()}/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`,
       {
         method: "POST",
+        signal: AbortSignal.timeout(10000),
         headers: { Authorization: `Bearer ${process.env.WHATSAPP_TOKEN}`, "Content-Type": "application/json" },
         body: JSON.stringify({ messaging_product: "whatsapp", to, type: "text", text: { body } }),
       }

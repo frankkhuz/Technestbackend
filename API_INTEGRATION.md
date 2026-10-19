@@ -722,6 +722,53 @@ the seller's contact details:
 - `PATCH /api/vendor/upgrade` and `PATCH /api/vendor/verify` now require
   the `X-CSRF-Token` header like every other form (`apiFetch` sends it).
 
+## 23. More accurate device valuation
+
+`POST /api/valuation/estimate` (and swap quotes) now take extra, optional
+condition details. Leaving them out gives exactly the same price as before.
+
+- **`cosmeticGrade`:** `like_new`, `good` (−4%), `fair` (−10%), `poor` (−20%).
+- **`faults`:** what's not working, from `GET /api/valuation/conditions`
+  (show as checkboxes, filtered by each fault's `appliesTo`). Fixable faults
+  (cracked screen, charging port, speaker, camera…) take off **what the
+  repair costs** for that device, from the repair price list. Others (water
+  damage, no network signal…) take off a percentage.
+- **`snapchatStatus: "banned"`** (phones): −10%.
+- **`batteryCycleCount`** (laptops): over 1,000 cycles −8%.
+- **`accountLocked: true`:** refused with a message — devices still signed
+  in to someone's iCloud/Google account can't be sold or swapped. Ask "Is
+  the phone signed out of iCloud / Google?" on the form.
+- **`imei`:** if it belongs to a different model, `warnings[]` says so.
+
+The response adds `amount` (naira) to each `breakdown` line,
+`repairDeduction`, `confidence: { level: high | medium | low, reason }`,
+`likelyRange` (wider when we're less sure — show it as "likely ₦X–₦Y"),
+`deductionCapped` and `warnings`. `min`/`max`/`value` mean the same as
+before.
+
+**Admin:** `GET /api/admin/prices/accuracy?days=180` compares our estimates
+with what vendors actually offered and paid, per device, and suggests
+raising or lowering a device's base price when deals are consistently 10%+
+off. Show it on the "Update prices" page.
+
+## 24. Health check and downtime
+
+- `GET /api/health` — 200 with `status: "ok"` when the API and database
+  are working, 503 with `status: "down"` when the database is unreachable.
+  Point UptimeRobot (free) at it. The frontend can call it to show a
+  "We're having trouble — try again shortly" banner.
+- While the database is down, every API call answers **503 straight away**
+  with `code: "service_unavailable"` and a `Retry-After` header, instead of
+  hanging. Show a friendly "temporarily unavailable, try again" message and
+  a retry button for that code.
+- Errors now carry a `code`: `bad_json`, `too_large`, `invalid` (with the
+  reason in `message`), `duplicate`, `cors`, `service_unavailable`,
+  `server_error`. `message` is always safe to show.
+- Paystack, email and WhatsApp calls give up after 10–15 seconds, so a slow
+  outside service can't freeze the app. Payment and WhatsApp webhooks ask
+  to be resent while the database is down, so no payment confirmation is
+  lost.
+
 ---
 
 ## Checklist
@@ -759,6 +806,8 @@ the seller's contact details:
 - [ ] "Does Snapchat work on this phone?" on the sell form
 - [ ] "Verify my number" button + "Phone verified" tick; admin Users page with the phone waiting list (section 21)
 - [ ] Listing pages: no seller phone/email any more, `bidCount`, paging (section 22)
+- [ ] /value form: cosmetic grade, "what's not working?" checkboxes, Snapchat, "signed out of iCloud/Google?"; show line amounts, confidence and likely range (section 23)
+- [ ] "Temporarily unavailable — try again" message for `code: "service_unavailable"`; optional status banner from `/api/health` (section 24)
 
 ## Backend setup (for whoever deploys it)
 
@@ -795,12 +844,12 @@ of the file every few months to pick up new phones.
 
 Set the Paystack webhook to `<backend>/api/checkout/webhook`.
 
-**Tests:** `npm test` runs every end-to-end suite in `test/` (about 270
+**Tests:** `npm test` runs every end-to-end suite in `test/` (about 300
 checks, a few minutes). Each suite starts the real server against a
 throwaway in-memory MongoDB with email, Paystack, Cloudinary and WhatsApp
 mocked, so nothing real is sent and no real database is touched. The first
 run downloads a MongoDB binary. Run one suite with `npm test -- imei` (or
-`email`, `marketplace`, `phone`, `privacy`). Run it before every deploy.
+`email`, `marketplace`, `phone`, `privacy`, `valuation`, `health`). Run it before every deploy.
 
 **Updating prices later:** use the admin "Update prices" page (section 10).
 Valuation prices now live in the database; on first start, the server fills

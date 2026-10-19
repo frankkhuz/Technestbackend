@@ -4,6 +4,7 @@
 //
 // The POST handler is mounted in server.js with a raw body parser (needed
 // to check Meta's signature), outside the JSON/CSRF middleware.
+const mongoose = require("mongoose");
 const User = require("../models/User");
 const whatsapp = require("../utils/whatsapp");
 const { notify } = require("../utils/notify");
@@ -63,6 +64,8 @@ const handleMessage = async (msg) => {
 
 const webhookHandler = async (req, res) => {
   if (!whatsapp.isValidSignature(req.body, req.headers["x-hub-signature-256"])) return res.sendStatus(401);
+  // Can't look up codes right now — make Meta deliver it again later
+  if (mongoose.connection.readyState !== 1) return res.sendStatus(503);
   // Acknowledge fast — Meta retries anything slow
   res.sendStatus(200);
 

@@ -357,6 +357,8 @@ const webhookHandler = async (req, res) => {
   const signature = req.headers["x-paystack-signature"];
   if (!paystack.isValidWebhookSignature(req.body, signature))
     return res.sendStatus(401);
+  // Can't record the payment right now — make Paystack send it again later
+  if (mongoose.connection.readyState !== 1) return res.sendStatus(503);
 
   // Acknowledge fast — Paystack retries anything that isn't a quick 200
   res.sendStatus(200);

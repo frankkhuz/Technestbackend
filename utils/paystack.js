@@ -4,15 +4,24 @@ const PAYSTACK_BASE = "https://api.paystack.co";
 
 const isConfigured = () => !!process.env.PAYSTACK_SECRET_KEY;
 
+// A slow or unreachable Paystack must not hang our requests — give up after
+// 15s and answer like any other Paystack failure
 const paystackRequest = async (path, { method = "GET", body } = {}) => {
-  const res = await fetch(`${PAYSTACK_BASE}${path}`, {
-    method,
-    headers: {
-      Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
-      ...(body ? { "Content-Type": "application/json" } : {}),
-    },
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  let res;
+  try {
+    res = await fetch(`${PAYSTACK_BASE}${path}`, {
+      method,
+      headers: {
+        Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+        ...(body ? { "Content-Type": "application/json" } : {}),
+      },
+      body: body ? JSON.stringify(body) : undefined,
+      signal: AbortSignal.timeout(15000),
+    });
+  } catch (err) {
+    console.error(`Paystack ${path.split("?")[0]} failed: ${err.message}`);
+    return { ok: false, data: { message: "The payment service isn't responding right now — please try again in a few minutes." } };
+  }
   const data = await res.json().catch(() => ({}));
   return { ok: res.ok && !!data.status, data };
 };

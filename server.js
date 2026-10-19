@@ -45,6 +45,9 @@ const adminAnnouncementRoutes = require("./routes/adminAnnouncements");
 const phoneRoutes = require("./routes/phone");
 const adminUserRoutes = require("./routes/adminUsers");
 const whatsappWebhook = require("./routes/whatsapp");
+const healthRoutes = require("./routes/health");
+const { requireDatabase, errorHandler } = require("./middleware/errors");
+const mongoose = require("mongoose");
 const swaggerUi = require("swagger-ui-express");
 const swaggerSpec = require("./config/swagger");
 
@@ -164,7 +167,12 @@ const limiter = rateLimit({
   max: 100,
   handler: (req, res) => sendError(res, 429, "Too many requests, slow down."),
 });
+// Health first: monitors must always get an answer, even when rate-limited
+// or the database is down
+app.use("/api/health", healthRoutes);
 app.use("/api/", limiter);
+// Answer straight away while the database is unreachable (docs still load)
+app.use("/api", (req, res, next) => (req.path.startsWith("/docs") ? next() : requireDatabase(req, res, next)));
 
 app.use("/api/gadgets", gadgetRoutes);
 app.use("/api/prices", priceRoutes);
@@ -213,15 +221,15 @@ app.use((req, res) => {
   sendError(res, 404, "Route not found");
 });
 
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  const isDev = process.env.NODE_ENV === "development";
-  sendError(
-    res,
-    err.status || 500,
-    isDev ? err.message : "Something went wrong"
-  );
+app.use(errorHandler);
+
+// A stray rejected promise (e.g. a background email) must not take the
+// whole server down — log it and carry on
+process.on("unhandledRejection", (reason) => {
+  console.error("Unhandled promise rejection:", reason instanceof Error ? reason.stack : reason);
 });
+mongoose.connection.on("disconnected", () => console.error("MongoDB disconnected — answering 503 until it's back"));
+mongoose.connection.on("reconnected", () => console.log("MongoDB reconnected"));
 
 const PORT = process.env.PORT || 5000;
 

@@ -10,6 +10,7 @@ const PROVIDERS = {
   brevo: (msg) =>
     fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
+      signal: AbortSignal.timeout(10000),
       headers: { "api-key": process.env.EMAIL_API_KEY, "Content-Type": "application/json" },
       body: JSON.stringify({
         sender: { name: fromName(), email: process.env.EMAIL_FROM },
@@ -22,6 +23,7 @@ const PROVIDERS = {
   resend: (msg) =>
     fetch("https://api.resend.com/emails", {
       method: "POST",
+      signal: AbortSignal.timeout(10000),
       headers: {
         Authorization: `Bearer ${process.env.EMAIL_API_KEY}`,
         "Content-Type": "application/json",
