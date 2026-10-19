@@ -1,8 +1,8 @@
 # Backend changes — what the frontend needs to do
 
 **For:** whoever works on the `technest11` frontend
-**Backend:** https://technestbackend-gue0.onrender.com (version 2.0.0)
-**Try every endpoint:** https://technestbackend-gue0.onrender.com/api/docs
+**Backend:** <https://technestbackend-gue0.onrender.com> (version 2.0.0)
+**Try every endpoint:** <https://technestbackend-gue0.onrender.com/api/docs>
 **Full details:** `API_INTEGRATION.md` sections 13–24 (section numbers below
 point there)
 
@@ -65,7 +65,8 @@ These Next.js routes talk to MongoDB directly. They don't work on Vercel
 
 ## 5. New things to build
 
-**Customers**
+### Customers
+
 - **Checkout** (`/checkout`): "Chat with us on WhatsApp" (`POST
   /api/order-requests` → open `whatsappUrl`) and a disabled "Pay online —
   Coming soon" (`GET /api/order-requests/options`). "My orders":
@@ -85,19 +86,22 @@ These Next.js routes talk to MongoDB directly. They don't work on Vercel
   `/api/products/flash-sale` (use `serverTime` for the countdown). §19
 - **Reserved** badge on listings held for a buyer.
 
-**Vendors**
+### Vendors
+
 - Vendor form: business name, type (phones / gadgets / accessories /
   repairs), states, brands, repair services, CAC certificate upload. §17
 - Requests inbox + offer form: `/api/requests/for-vendor`,
   `POST /api/requests/:id/offers`. Bulk stock upload. §18, §19
 
-**Admin**
+### Admin
+
 - WhatsApp orders (§15), identity checks (§16), requests (§18), stolen
   reports and IMEI model codes (§13), users & phone waiting list (§21),
   categories editor, bulk product upload, flash sale (§19), announcements
   (§20), estimate accuracy report (§23), listing review flags (§10).
 
-**Everywhere**
+### Everywhere
+
 - Notifications: handle the new `type`s (`device_request`,
   `offer_received`, `offer_accepted`, `offer_update`, `order_request`,
   `identity_update`, `account_update`, `listing_update`,
