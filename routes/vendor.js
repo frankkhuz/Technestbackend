@@ -15,6 +15,7 @@ const { listingUnavailableReason } = require("../utils/availability");
 const { normalizeStates } = require("../utils/nigeria");
 const { isOwnPrivateUpload } = require("../utils/identity");
 const { parseCsvWithHeader } = require("../utils/csv");
+const { ratingsFor } = require("../utils/reviews");
 const VENDOR_TYPES = ["phone_dealer", "gadgets", "accessories", "repairs"];
 const REPAIR_IDS = new Set(require("../data/repairs.json").map((r) => r.id));
 const { verifyCsrfToken } = require("../middleware/csrf");
@@ -577,7 +578,7 @@ router.get("/commissions", protect, restrictTo("vendor"), requireVendorVerified,
  *         schema: { type: string, description: id from GET /api/repair-triage/services }
  *     responses:
  *       200:
- *         description: "data.vendors: [{ id, name, vendorTypes, brands, states, city, repairServices, identityVerified, memberSince }]"
+ *         description: "data.vendors: [{ id, name, vendorTypes, brands, states, city, repairServices, identityVerified, rating: { average, count } | null, memberSince }]"
  */
 router.get("/directory", async (req, res, next) => {
   try {
@@ -592,6 +593,7 @@ router.get("/directory", async (req, res, next) => {
       .select("name vendorProfile identityVerified createdAt")
       .sort({ identityVerified: -1, createdAt: 1 })
       .limit(200);
+    const ratings = await ratingsFor(vendors.map((v) => v._id));
     sendSuccess(res, 200, "Vendors fetched", {
       vendors: vendors.map((v) => ({
         id: v._id,
@@ -602,6 +604,7 @@ router.get("/directory", async (req, res, next) => {
         city: v.vendorProfile?.city || null,
         repairServices: v.vendorProfile?.repairServices || [],
         identityVerified: v.identityVerified,
+        rating: ratings.get(String(v._id)) || null,
         memberSince: v.createdAt,
       })),
     });

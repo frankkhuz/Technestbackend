@@ -195,6 +195,15 @@ router.patch("/:id", verifyCsrfToken, async (req, res, next) => {
     }
     if (next_ === "completed")
       await buyerUpdate(`Order ${request.reference} complete`, "Thanks for buying with TechNest!");
+    if (next_ === "completed" && request.listing && request.buyer)
+      await notify({
+        recipient: request.buyer,
+        type: "review_request",
+        title: "How was the seller?",
+        message: `Rate the seller of your ${request.items[0]?.name} — it helps other buyers.`,
+        orderRequest: request._id,
+        email: false,
+      });
 
     if (next_ === "cancelled") {
       if (request.listing) await releaseListing(request.listing, request._id);

@@ -44,6 +44,7 @@ const options = {
       { name: "Health", description: "Uptime check for monitors and the frontend's status banner" },
       { name: "Internal", description: "Called by a scheduler, not the frontend" },
       { name: "Admin — Finance", description: "Sales, TechNest's earnings, seller payouts and vendor commissions" },
+      { name: "Reviews", description: "Ratings after completed deals — shown on offers and the vendor directory, used in matching" },
       { name: "Phone", description: "Verify a phone number on WhatsApp — automatic via the Cloud API, or by staff" },
       { name: "Admin — Users", description: "Find users; verify phone numbers by hand" },
       { name: "Vendor" },

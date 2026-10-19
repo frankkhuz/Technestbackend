@@ -39,6 +39,8 @@ const NotificationSchema = new mongoose.Schema(
         "offer_update",
         "announcement",
         "admin_alert",
+        "review_request",
+        "review_received",
       ],
       required: true,
     },

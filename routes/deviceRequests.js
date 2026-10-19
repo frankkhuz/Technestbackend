@@ -18,6 +18,7 @@ const {
   settleIfExpired,
   whatsappFor,
 } = require("../utils/matching");
+const { ratingsFor } = require("../utils/reviews");
 const router = express.Router();
 
 const REPAIR_IDS = new Set(require("../data/repairs.json").map((r) => r.id));
@@ -63,12 +64,13 @@ const base = (r) => ({
 // flagged — vendor names and track record, never their contacts
 const customerView = async (r) => {
   const vendorIds = r.offers.map((o) => o.vendor);
-  const [deals, vendors] = await Promise.all([
+  const [deals, vendors, ratings] = await Promise.all([
     completedDealsFor(vendorIds),
     User.find({ _id: { $in: vendorIds } }).select("identityVerified"),
+    ratingsFor(vendorIds),
   ]);
   const verified = new Set(vendors.filter((v) => v.identityVerified).map((v) => String(v._id)));
-  const ranked = r.status === "open" ? rankOffers(r, deals) : r.offers.filter((o) => ["accepted", "declined"].includes(o.status));
+  const ranked = r.status === "open" ? rankOffers(r, deals, ratings) : r.offers.filter((o) => ["accepted", "declined"].includes(o.status));
   return {
     ...base(r),
     matchedVendors: r.matchedVendors.length,
@@ -78,6 +80,7 @@ const customerView = async (r) => {
       vendorName: o.vendorName,
       vendorVerified: verified.has(String(o.vendor)),
       vendorCompletedDeals: deals.get(String(o.vendor)) || 0,
+      vendorRating: ratings.get(String(o.vendor)) || null,
       price: o.price,
       message: o.message || undefined,
       eta: o.eta || undefined,

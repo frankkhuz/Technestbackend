@@ -460,6 +460,17 @@ router.patch("/:id", verifyCsrfToken, async (req, res, next) => {
         `Your ${txn.type} of ${txn.listingDeviceName} is marked complete.`,
         txn
       );
+      await notifyUsers(
+        [txn.buyer, txn.seller].map((recipient) => ({
+          recipient,
+          type: "review_request",
+          title: "How did the deal go?",
+          message: `Rate the other side of your ${txn.type} of ${txn.listingDeviceName}.`,
+          listing: txn.listing,
+          transaction: txn._id,
+          email: false,
+        }))
+      );
     } else if (nextStatus === "cancelled") {
       await notify(
         other,

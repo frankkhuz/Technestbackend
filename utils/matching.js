@@ -8,6 +8,7 @@ const DeviceRequest = require("../models/DeviceRequest");
 const { notify, notifyAdmins } = require("./notify");
 const { normalizeDeviceName } = require("./textParsing");
 const { SUPPORT_WHATSAPP } = require("./supportFaq");
+const { ratingsFor } = require("./reviews");
 
 const MAX_MATCHED = 40;
 // Emails cost free-tier quota; the best-ranked vendors get one, the rest
@@ -53,6 +54,7 @@ const findMatchingVendors = async (request) => {
     stocked = new Set(items.filter((i) => normalizeDeviceName(i.deviceName).includes(key)).map((i) => String(i.vendor)));
   }
   const brand = brandWord(request.deviceName);
+  const ratings = await ratingsFor(vendors.map((v) => v._id));
   const score = (v) => {
     const p = v.vendorProfile || {};
     let s = 0;
@@ -61,6 +63,9 @@ const findMatchingVendors = async (request) => {
     if (p.brands?.some((b) => b.toLowerCase() === brand)) s += 1;
     if (request.repairServiceId && p.repairServices?.includes(request.repairServiceId)) s += 2;
     if (v.identityVerified) s += 1;
+    // Customers' ratings count once there are a few of them
+    const rating = ratings.get(String(v._id));
+    if (rating?.count >= 3) s += rating.average >= 4.5 ? 1 : rating.average < 3 ? -2 : 0;
     return s;
   };
   return vendors
@@ -82,16 +87,18 @@ const completedDealsFor = async (vendorIds) => {
 /**
  * Active offers best-first. The rule: best price wins (lowest, or highest
  * for sell requests); ties go to the vendor with more completed deals,
- * then the earlier offer.
+ * then the better rating, then the earlier offer.
  */
-const rankOffers = (request, deals) => {
+const rankOffers = (request, deals, ratings = new Map()) => {
   const dir = higherIsBetter(request.type) ? -1 : 1;
+  const stars = (o) => ratings.get(String(o.vendor))?.average || 0;
   return request.offers
     .filter((o) => o.status === "active")
     .sort(
       (a, b) =>
         dir * (a.price - b.price) ||
         (deals.get(String(b.vendor)) || 0) - (deals.get(String(a.vendor)) || 0) ||
+        stars(b) - stars(a) ||
         a.createdAt - b.createdAt
     );
 };
@@ -162,8 +169,9 @@ const settleIfExpired = async (request) => {
   );
   if (!claimed) return (await DeviceRequest.findById(request._id)) || request;
 
-  const deals = await completedDealsFor(claimed.offers.map((o) => o.vendor));
-  const best = rankOffers(claimed, deals)[0];
+  const vendorIds = claimed.offers.map((o) => o.vendor);
+  const [deals, ratings] = await Promise.all([completedDealsFor(vendorIds), ratingsFor(vendorIds)]);
+  const best = rankOffers(claimed, deals, ratings)[0];
   if (claimed.autoSelect && best) {
     await acceptOffer(claimed, best, { auto: true });
   } else {

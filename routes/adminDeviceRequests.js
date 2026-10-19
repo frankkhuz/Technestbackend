@@ -119,6 +119,14 @@ router.patch("/:id", verifyCsrfToken, async (req, res, next) => {
         message: `Your ${request.type} request for "${request.deviceName}" is complete. Thanks for using TechNest!`,
         deviceRequest: request._id,
       });
+      await notify({
+        recipient: request.customer,
+        type: "review_request",
+        title: "How did it go?",
+        message: `Rate the vendor who handled your ${request.type} request for "${request.deviceName}" — it helps other customers choose.`,
+        deviceRequest: request._id,
+        email: false,
+      });
     } else if (status === "cancelled") {
       if (!["open", "accepted"].includes(request.status)) return sendError(res, 409, "This request is already closed.");
       request.status = "cancelled";

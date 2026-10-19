@@ -272,6 +272,65 @@ section("listing expiry", async ({ C, db, ids, Client }) => {
   t("undoing 'sold' still works", r.json.data.listing.status === "active");
 });
 
+// ── Gap 6: ratings and reviews ─────────────────────────────────────────────
+section("reviews", async ({ C, db, ids }) => {
+  const oid = (x) => new ctx.mongoose.Types.ObjectId(String(x));
+  let r = await C.buyer.req("GET", "/api/reviews/pending");
+  const deals = r.json?.data?.deals || [];
+  t("pending reviews list completed deals", deals.some((d) => d.type === "device_request" && d.subject.name === "Ade Phones") && deals.some((d) => d.type === "order_request" && d.subject.name === "Seller Test"), J(deals));
+  const reqDeal = deals.find((d) => d.type === "device_request");
+  r = await C.buyer.req("POST", "/api/reviews", { source: { type: "device_request", id: reqDeal.id }, rating: 6 });
+  t("rating must be 1–5", r.status === 400);
+  r = await C.other.req("POST", "/api/reviews", { source: { type: "device_request", id: reqDeal.id }, rating: 5 });
+  t("someone outside the deal can't review it", r.status === 404);
+  r = await C.buyer.req("POST", "/api/reviews", { source: { type: "device_request", id: reqDeal.id }, rating: 5, comment: "Fast and honest" });
+  t("customer reviews the vendor", r.status === 201 && r.json.data.review.authorName === "Buyer", J(r.json));
+  const reviewId = r.json.data.review.id;
+  t("vendor told about the review", (await db.collection("notifications").countDocuments({ recipient: ids.v1, type: "review_received" })) === 1);
+  r = await C.buyer.req("POST", "/api/reviews", { source: { type: "device_request", id: reqDeal.id }, rating: 1 });
+  t("one review per deal", r.status === 409);
+  const swap = await db.collection("transactions").findOne({ buyer: ids.buyer, type: "swap" });
+  r = await C.buyer.req("POST", "/api/reviews", { source: { type: "transaction", id: String(swap._id) }, rating: 4 });
+  t("can't review an unfinished deal", r.status === 409 && /completed/.test(r.json.message));
+  const orderDeal = deals.find((d) => d.type === "order_request");
+  await db.collection("orderrequests").updateOne({ _id: oid(orderDeal.id) }, { $set: { completedAt: new Date(Date.now() - 31 * 864e5) } });
+  r = await C.buyer.req("POST", "/api/reviews", { source: { type: "order_request", id: orderDeal.id }, rating: 4 });
+  t("reviews close after 30 days", r.status === 409 && /30 days/.test(r.json.message));
+  await db.collection("orderrequests").updateOne({ _id: oid(orderDeal.id) }, { $set: { completedAt: new Date() } });
+  r = await C.buyer.req("POST", "/api/reviews", { source: { type: "order_request", id: orderDeal.id }, rating: 4 });
+  t("buyer reviews a listing's seller", r.status === 201);
+  r = await C.buyer.req("GET", "/api/reviews/pending");
+  t("reviewed deals leave the pending list", !r.json.data.deals.some((d) => [reqDeal.id, orderDeal.id].includes(d.id)));
+
+  r = await new ctx.Client().req("GET", `/api/reviews/users/${ids.v1}`);
+  t("public rating page", r.json.data.average === 5 && r.json.data.count === 1 && r.json.data.stars["5"] === 1 && r.json.data.reviews[0].comment === "Fast and honest" && !J(r.json).includes("buyer@t.com"), J(r.json));
+  r = await C.buyer.req("POST", `/api/reviews/${reviewId}/reply`, { reply: "x" });
+  t("only the reviewed person can reply", r.status === 404);
+  r = await C.v1.req("POST", `/api/reviews/${reviewId}/reply`, { reply: "Thank you!" });
+  t("vendor replies", r.status === 200 && r.json.data.review.reply === "Thank you!");
+  r = await C.v1.req("POST", `/api/reviews/${reviewId}/reply`, { reply: "again" });
+  t("…once", r.status === 409);
+
+  r = await C.admin.req("PATCH", `/api/reviews/admin/${reviewId}`, { status: "hidden", reason: "test" });
+  r = await new ctx.Client().req("GET", `/api/reviews/users/${ids.v1}`);
+  t("hidden reviews don't count", r.json.data.count === 0 && r.json.data.average === null);
+  await C.admin.req("PATCH", `/api/reviews/admin/${reviewId}`, { status: "visible" });
+  r = await C.admin.req("GET", "/api/reviews/admin?maxRating=4");
+  t("admin can list low ratings", r.json.data.reviews.length === 1 && r.json.data.reviews[0].rating === 4);
+
+  r = await new ctx.Client().req("GET", "/api/vendors/directory?state=Lagos");
+  t("directory shows ratings", r.json.data.vendors.find((v) => v.name === "Ade Phones")?.rating?.average === 5, J(r.json.data.vendors));
+
+  // Poorly rated vendors rank lower in matching; offers show ratings
+  await db.collection("reviews").insertMany([1, 2, 3].map((i) => ({ author: oid(ids.other), authorName: "O", subject: oid(ids.v2), source: { type: "transaction", id: new ctx.mongoose.Types.ObjectId() }, rating: 1, status: "visible", createdAt: new Date(), updatedAt: new Date() })));
+  r = await C.buyer.req("POST", "/api/requests", { type: "buy", category: "phone", deviceName: "Galaxy A55", state: "Lagos" });
+  const rq = await db.collection("devicerequests").findOne({ _id: oid(r.json.data.request.id) });
+  t("well-rated vendor ranks first; low-rated still matched", String(rq.matchedVendors[0]) === String(ids.v1) && rq.matchedVendors.some((v) => String(v) === String(ids.v2)), J(rq.matchedVendors));
+  await C.v2.req("POST", `/api/requests/${rq._id}/offers`, { price: 300000 });
+  r = await C.buyer.req("GET", `/api/requests/${rq._id}`);
+  t("offers show the vendor's rating", r.json.data.request.offers[0].vendorRating?.average === 1 && r.json.data.request.offers[0].vendorRating.count === 3, J(r.json.data.request.offers));
+});
+
 (async () => {
   const mongo = await MongoMemoryServer.create();
   const uri = mongo.getUri("technest_test");
