@@ -11,6 +11,7 @@ const { sendSuccess, sendError } = require("../utils/response");
 const paystack = require("../utils/paystack");
 const { settleOrder } = require("../utils/orderEffects");
 const { listingUnavailableReason } = require("../utils/availability");
+const { stockProblem } = require("../utils/stock");
 const {
   computeListingCheckout,
   isValidNigerianPhone,
@@ -265,6 +266,8 @@ router.post(
             return sendError(res, 400, "One of the items in your cart is invalid.");
           if (!Number.isInteger(line.quantity) || line.quantity < 1 || line.quantity > 20)
             return sendError(res, 400, "Invalid quantity.");
+          const short = stockProblem(product, line.quantity);
+          if (short) return sendError(res, 409, short);
           const condition = line.condition === "brand-new" ? "brand-new" : "uk-used";
 
           lineItems.push({

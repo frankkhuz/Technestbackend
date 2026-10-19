@@ -2,6 +2,7 @@ const Order = require("../models/Order");
 const Listing = require("../models/Listing");
 const Transaction = require("../models/Transaction");
 const { notify } = require("./notify");
+const { takeFromStock } = require("./stock");
 const paystack = require("./paystack");
 
 // Applies a Paystack verification result to an order. Called from both the
@@ -52,6 +53,8 @@ const applyPaidEffects = async (order) => {
       order: order._id,
     },
   ];
+
+  if (order.kind === "cart") await takeFromStock(order.items.map((i) => ({ itemId: i.itemId, quantity: i.quantity })));
 
   if (order.kind === "listing" && order.listing) {
     const listing = await Listing.findOneAndUpdate(

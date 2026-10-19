@@ -318,6 +318,7 @@ const EDITABLE_FIELDS = [
   "priceUkUsed",
   "priceBrandNew",
   "inStock",
+  "stockQuantity",
   "isActive",
   "attributes",
   "sale",
@@ -356,6 +357,11 @@ const validateSale = (sale, { priceUkUsed, priceBrandNew }) => {
 // Category must exist, attributes must fit it, and a sale must undercut the
 // normal price. Mutates and returns fields, or returns { error }.
 const checkProductFields = async (fields, current = null) => {
+  if (fields.stockQuantity !== undefined && fields.stockQuantity !== null) {
+    const n = Number(fields.stockQuantity);
+    if (!Number.isInteger(n) || n < 0) return { error: "stockQuantity must be a whole number (or null to stop counting)" };
+    fields.stockQuantity = n;
+  }
   const categorySlug = String(fields.category ?? current?.category ?? "").toLowerCase();
   const category = await Category.findOne({ slug: categorySlug });
   if (!category) return { error: `Unknown category "${categorySlug}". See GET /api/categories.` };
@@ -379,7 +385,7 @@ const checkProductFields = async (fields, current = null) => {
 const slugify = (s) =>
   String(s || "").toLowerCase().replace(/\+/g, " plus ").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 100);
 
-const PRODUCT_COLUMNS = new Set(["slug", "type", "name", "brand", "category", "priceukused", "pricebrandnew", "storage", "colors", "ram", "spec", "badge", "tags", "image", "instock"]);
+const PRODUCT_COLUMNS = new Set(["slug", "type", "name", "brand", "category", "priceukused", "pricebrandnew", "storage", "colors", "ram", "spec", "badge", "tags", "image", "instock", "stock"]);
 
 /**
  * @swagger
@@ -390,7 +396,8 @@ const PRODUCT_COLUMNS = new Set(["slug", "type", "name", "brand", "category", "p
  *       Header row required. Columns: slug (optional — made from the name),
  *       type (phone | gadget), name, brand, category (slug),
  *       priceUkUsed, priceBrandNew, storage / colors / tags (separate values
- *       with |), ram, spec, badge, image, inStock (yes/no). Any other column
+ *       with |), ram, spec, badge, image, inStock (yes/no), stock (units on
+ *       hand — leave blank not to count). Any other column
  *       is read as a filter for that row's category, e.g. connectivity,
  *       noiseCancelling. Rows whose slug exists are updated (blank cells are
  *       left alone). Send `dryRun: true` first to see what would happen.
@@ -440,6 +447,12 @@ router.post("/bulk", protect, restrictTo("admin"), verifyCsrfToken, async (req, 
         if (v[col]) fields[f] = Number(String(v[col]).replace(/[₦,\s]/g, ""));
       for (const [col, f] of [["storage", "storage"], ["colors", "colors"], ["tags", "tags"]]) if (v[col]) fields[f] = splitList(v[col]);
       if (v.instock) fields.inStock = parseBool(v.instock);
+      // bulkWrite skips the model's save hook, so keep inStock in step here
+      if (v.stock !== undefined && v.stock !== "") {
+        const n = Number(v.stock);
+        if (!Number.isInteger(n) || n < 0) { fail("stock must be a whole number"); continue; }
+        Object.assign(fields, { stockQuantity: n, inStock: n > 0 });
+      }
 
       const merged = { ...(current ? current.toObject() : {}), ...fields };
       if (!current && (!merged.type || !merged.name || !merged.brand || !merged.category || !(merged.priceUkUsed >= 0) || !(merged.priceBrandNew >= 0))) {
@@ -592,6 +605,7 @@ router.delete("/flash-sale", protect, restrictTo("admin"), verifyCsrfToken, asyn
  *               priceUkUsed: { type: number }
  *               priceBrandNew: { type: number }
  *               inStock: { type: boolean }
+ *               stockQuantity: { type: integer, nullable: true, description: "Units on hand; null = not counted. When set, inStock follows it and sales reduce it." }
  *     responses:
  *       201:
  *         description: Product created

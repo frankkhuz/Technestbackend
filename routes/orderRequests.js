@@ -10,6 +10,7 @@ const { sendSuccess, sendError } = require("../utils/response");
 const { normalizeNigerianPhone } = require("../utils/pricing");
 const { normalizeState } = require("../utils/nigeria");
 const { listingUnavailableReason } = require("../utils/availability");
+const { stockProblem } = require("../utils/stock");
 const { SUPPORT_WHATSAPP } = require("../utils/supportFaq");
 const { notifyAdmins } = require("../utils/notify");
 const paystack = require("../utils/paystack");
@@ -159,6 +160,8 @@ router.post("/", requestLimiter, optionalAuth, verifyCsrfIfAuthenticated, async 
         if (!product.inStock) return sendError(res, 409, `${product.name} is out of stock.`);
         const quantity = Number.isInteger(line.quantity) ? line.quantity : 1;
         if (quantity < 1 || quantity > 20) return sendError(res, 400, "Invalid quantity.");
+        const short = stockProblem(product, quantity);
+        if (short) return sendError(res, 409, short);
         const condition = line.condition === "brand-new" ? "brand-new" : "uk-used";
         lines.push({
           itemType: "product",

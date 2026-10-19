@@ -10,6 +10,7 @@ const { notify } = require("../utils/notify");
 const { reserveListing, releaseListing, RESERVATION_HOURS } = require("../utils/availability");
 const { whatsappLink } = require("./orderRequests");
 const { settleAmounts } = require("../utils/finance");
+const { takeFromStock } = require("../utils/stock");
 const router = express.Router();
 
 router.use(protect, restrictTo("admin"));
@@ -219,6 +220,8 @@ router.patch("/:id", verifyCsrfToken, async (req, res, next) => {
         })),
       ]);
     }
+    if (next_ === "completed" && request.kind === "cart")
+      await takeFromStock(request.items.filter((i) => i.itemType === "product").map((i) => ({ itemId: i.itemId, quantity: i.quantity })));
     if (next_ === "completed") {
       Object.assign(request, amounts, {
         sellerPayout: request.listing ? amounts.finalPrice - amounts.commission : 0,

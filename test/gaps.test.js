@@ -539,6 +539,31 @@ section("audit log", async ({ C, db, ids }) => {
   t("entries expire after two years", idx.some((i) => i.expireAfterSeconds === 2 * 365 * 24 * 3600));
 });
 
+// ── Item 12: stock counts ──────────────────────────────────────────────────
+section("stock counts", async ({ C, db }) => {
+  let r = await C.admin.req("PATCH", "/api/products/iphone-13", { stockQuantity: -1 });
+  t("stock must be a whole number ≥ 0", r.status === 400);
+  r = await C.admin.req("PATCH", "/api/products/iphone-13", { stockQuantity: 2 });
+  t("stock set; low-stock flag", r.json.data.product.stockQuantity === 2 && r.json.data.product.lowStock === true && r.json.data.product.inStock === true, J(r.json));
+  const shopper = new ctx.Client();
+  r = await shopper.req("POST", "/api/order-requests", { buyerName: "Shopper", buyerPhone: "08035550000", items: [{ itemId: "iphone-13", quantity: 3 }] });
+  t("can't order more than are left", r.status === 409 && /Only 2 iPhone 13 left/.test(r.json.message), J(r.json));
+  r = await shopper.req("POST", "/api/order-requests", { buyerName: "Shopper", buyerPhone: "08035550000", items: [{ itemId: "iphone-13", quantity: 2 }] });
+  const o = r.json.data.request;
+  await C.admin.req("PATCH", `/api/admin/order-requests/${o.id}`, { status: "in_progress" });
+  await C.admin.req("PATCH", `/api/admin/order-requests/${o.id}`, { status: "completed" });
+  const p = await db.collection("products").findOne({ slug: "iphone-13" });
+  t("completing the sale takes the units off → out of stock", p.stockQuantity === 0 && p.inStock === false, J(p));
+  // A fresh visitor — the test buyer has hit the 10-orders-per-15-minutes limit by now
+  r = await new ctx.Client().req("POST", "/api/order-requests", { buyerName: "Guest", buyerPhone: "08035550000", items: [{ itemId: "iphone-13" }] });
+  t("sold-out product can't be ordered", r.status === 409 && /out of stock/.test(r.json.message), `${r.status} ${J(r.json)}`);
+  r = await C.admin.req("PATCH", "/api/products/iphone-13", { stockQuantity: 5 });
+  t("restocking puts it back in stock", r.json.data.product.inStock === true && r.json.data.product.lowStock === true);
+  r = await C.admin.req("POST", "/api/products/bulk", { csv: "name,type,brand,category,priceUkUsed,priceBrandNew,stock\nStock Cable,gadget,Anker,cable,1000,2000,0\nBad Stock,gadget,Anker,cable,1000,2000,lots" });
+  const sc = await db.collection("products").findOne({ slug: "stock-cable" });
+  t("bulk upload: stock column (0 → out of stock); bad value rejected", sc.stockQuantity === 0 && sc.inStock === false && r.json.data.failed === 1, J(r.json.data));
+});
+
 (async () => {
   const mongo = await MongoMemoryServer.create();
   const uri = mongo.getUri("technest_test");

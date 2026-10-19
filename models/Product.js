@@ -55,6 +55,9 @@ const ProductSchema = new mongoose.Schema(
     },
 
     inStock: { type: Boolean, default: true },
+    // Optional unit count. null = not counted (inStock is set by hand);
+    // when set, inStock follows it and sales take it down (utils/stock.js)
+    stockQuantity: { type: Number, min: 0, default: null },
     // Soft-delete: hidden from the catalog but kept so old orders (and
     // "buy again") can still resolve the slug to a name.
     isActive: { type: Boolean, default: true },
@@ -65,6 +68,11 @@ const ProductSchema = new mongoose.Schema(
 ProductSchema.index({ type: 1, category: 1, isActive: 1 });
 ProductSchema.index({ name: "text", brand: "text", tags: "text" });
 ProductSchema.index({ "sale.endsAt": 1, "sale.startsAt": 1 });
+
+// A counted product is in stock exactly while it has units left
+ProductSchema.pre("save", function () {
+  if (this.stockQuantity !== null && this.stockQuantity !== undefined) this.inStock = this.stockQuantity > 0;
+});
 
 ProductSchema.methods.saleActive = function (now = new Date()) {
   const s = this.sale;
@@ -95,6 +103,9 @@ ProductSchema.methods.toClient = function () {
     priceBrandNew: this.priceBrandNew,
     badge: this.badge || undefined,
     inStock: this.inStock,
+    // Only shown when counted — "Only 3 left" when it's low
+    stockQuantity: this.stockQuantity ?? undefined,
+    lowStock: this.stockQuantity != null && this.stockQuantity > 0 && this.stockQuantity <= 5 ? true : undefined,
     isActive: this.isActive,
     attributes: this.attributes && Object.keys(this.attributes).length ? this.attributes : undefined,
     // Show the base price struck through next to the sale price while active
