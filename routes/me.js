@@ -37,6 +37,8 @@ router.get("/", protect, (req, res) => {
     vendorProfile: req.user.vendorProfile,
     identityVerified: req.user.identityVerified,
     identityStatus: req.user.identity?.status || "none",
+    phone: req.user.phone,
+    phoneVerified: req.user.phoneVerified,
   });
 });
 

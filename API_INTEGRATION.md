@@ -657,6 +657,50 @@ automatically wherever prices are worked out.
   on time (auto-picking offers) and keeps the free Render server awake.
   Everything still works without it.
 
+## 21. Phone verification on WhatsApp
+
+One button, **"Verify my number"**, works in two modes — the backend picks:
+
+1. `POST /api/phone/verify { phone }` returns `method` and `whatsappUrl`.
+   **Open the link.**
+   - `method: "whatsapp"` (automatic, once the WhatsApp Cloud API is set up):
+     the link opens WhatsApp with a code like `VN-7K3QXP` already typed.
+     When the customer sends it **from that same number**, it's verified
+     straight away and the bot replies "✅". Codes last 30 minutes.
+   - `method: "manual"` (until then): the link opens a chat with the sales
+     number. Staff verify the number from the admin panel.
+2. Show progress from `GET /api/phone` (`phoneVerified`, `pending`) — poll
+   it every few seconds while the customer is in WhatsApp, or wait for the
+   `account_update` notification.
+
+`GET /api/me` and each listing's `owner` include `phoneVerified` — show a
+"Phone verified" tick. `409` means the number is verified on another
+account.
+
+**Admin page "Users":** `GET /api/admin/users?q=` (name, email or phone in
+any format) and `?phonePending=true` (people waiting for staff to verify).
+`PATCH /api/admin/users/:id/phone { verified: true }` verifies the number
+they asked about (or send `phone` to set it); `{ verified: false }` undoes
+it. Only verify a number you've seen message you on WhatsApp.
+
+**Turning on automatic mode** (backend env vars, from the Meta developer
+dashboard → your app → WhatsApp):
+
+```
+WHATSAPP_TOKEN=<permanent system-user access token>
+WHATSAPP_PHONE_NUMBER_ID=<the number's Phone number ID>
+WHATSAPP_APP_SECRET=<App settings → Basic → App secret>
+WHATSAPP_VERIFY_NUMBER=234XXXXXXXXXX       # the verification number customers message
+WHATSAPP_VERIFY_TOKEN=<any random string>   # also typed into Meta's webhook setup
+WHATSAPP_API_VERSION=v23.0                  # optional; bump when Meta retires a version
+```
+
+In Meta's webhook settings use callback URL
+`<backend>/api/whatsapp/webhook` with the same verify token, and subscribe
+to **messages**. Use a separate number from the sales line — a number on
+the Cloud API generally can't be used in the WhatsApp app at the same time.
+Ordinary messages to the verification number get no bot reply.
+
 ---
 
 ## Checklist
@@ -692,6 +736,7 @@ automatically wherever prices are worked out.
 - [ ] Category menu from `/api/categories`; per-category filter sidebar; flash sale strip + countdown (section 19)
 - [ ] Admin: WhatsApp orders, identity checks, requests, categories editor, bulk upload, flash sale, announcements
 - [ ] "Does Snapchat work on this phone?" on the sell form
+- [ ] "Verify my number" button + "Phone verified" tick; admin Users page with the phone waiting list (section 21)
 
 ## Backend setup (for whoever deploys it)
 

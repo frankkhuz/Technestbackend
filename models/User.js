@@ -41,6 +41,20 @@ const UserSchema = new mongoose.Schema(
       cacCertificateId: { type: String, default: null },
     },
 
+    // Phone verification (utils/whatsapp.js): automatic via the WhatsApp
+    // Cloud API, or ticked by staff after chatting with the customer
+    phone: { type: String, default: null }, // +234..., set once verified
+    phoneVerified: { type: Boolean, default: false },
+    phoneVerifiedAt: { type: Date, default: null },
+    phoneVerifiedVia: { type: String, enum: ["whatsapp", "admin", null], default: null },
+    phoneVerification: {
+      phone: String, // the number being verified
+      method: { type: String, enum: ["whatsapp", "manual"] },
+      codeHash: String,
+      expiresAt: Date,
+      requestedAt: Date,
+    },
+
     // Free identity check (utils/identity.js). identityVerified is the
     // public "verified seller" badge.
     identityVerified: { type: Boolean, default: false },
@@ -68,6 +82,9 @@ const UserSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+UserSchema.index({ "phoneVerification.codeHash": 1 }, { sparse: true });
+UserSchema.index({ phone: 1 }, { sparse: true });
 
 UserSchema.pre("save", async function () {
   if (!this.isModified("password")) return;

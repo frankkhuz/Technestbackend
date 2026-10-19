@@ -42,6 +42,9 @@ const adminDeviceRequestRoutes = require("./routes/adminDeviceRequests");
 const internalRoutes = require("./routes/internal");
 const categoryRoutes = require("./routes/categories");
 const adminAnnouncementRoutes = require("./routes/adminAnnouncements");
+const phoneRoutes = require("./routes/phone");
+const adminUserRoutes = require("./routes/adminUsers");
+const whatsappWebhook = require("./routes/whatsapp");
 const swaggerUi = require("swagger-ui-express");
 const swaggerSpec = require("./config/swagger");
 
@@ -93,6 +96,11 @@ if (!require("./utils/email").isConfigured()) {
     "Email is not configured (EMAIL_PROVIDER, EMAIL_API_KEY, EMAIL_FROM) — emails are logged instead of sent, and email verification isn't enforced."
   );
 }
+if (!require("./utils/whatsapp").isConfigured()) {
+  console.warn(
+    "WhatsApp Cloud API is not configured — phone numbers are verified by staff from the admin panel."
+  );
+}
 if (!process.env.ANTHROPIC_API_KEY) {
   console.warn(
     "ANTHROPIC_API_KEY is not set — AI extras are off; every feature uses its free built-in version."
@@ -134,6 +142,13 @@ app.post(
   express.raw({ type: "application/json", limit: "100kb" }),
   checkoutRoutes.webhookHandler
 );
+// WhatsApp Cloud API webhook — same reasons as Paystack's above
+app.get("/api/whatsapp/webhook", whatsappWebhook.verifyHandler);
+app.post(
+  "/api/whatsapp/webhook",
+  express.raw({ type: "application/json", limit: "200kb" }),
+  whatsappWebhook.webhookHandler
+);
 
 // CSV uploads need more room than the 10kb every other route gets. These
 // run first; the general parser below skips bodies already parsed.
@@ -173,6 +188,8 @@ app.use("/api/requests", deviceRequestRoutes);
 app.use("/api/internal", internalRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/admin/announcements", adminAnnouncementRoutes);
+app.use("/api/phone", phoneRoutes);
+app.use("/api/admin/users", adminUserRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/uploads", uploadRoutes);
 app.use("/api/notifications", notificationRoutes);

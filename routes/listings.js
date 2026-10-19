@@ -84,7 +84,7 @@ router.get("/", async (req, res, next) => {
       filter.$or = [{ reservedUntil: null }, { reservedUntil: { $lte: new Date() } }];
 
     const listings = await Listing.find(filter)
-      .populate("owner", "name email vendorProfile identityVerified")
+      .populate("owner", "name email vendorProfile identityVerified phoneVerified")
       .sort({ createdAt: -1 });
 
     res.json({ success: true, data: { listings } });
@@ -181,7 +181,7 @@ router.get("/:id", async (req, res, next) => {
         .json({ success: false, error: "Listing not found" });
     const listing = await Listing.findById(req.params.id).populate(
       "owner",
-      "name email vendorProfile identityVerified"
+      "name email vendorProfile identityVerified phoneVerified"
     );
     if (!listing)
       return res

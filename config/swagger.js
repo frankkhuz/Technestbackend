@@ -38,6 +38,8 @@ const options = {
       { name: "Admin — Requests", description: "Oversee customer requests; match again" },
       { name: "Categories", description: "Category tree and per-category filters" },
       { name: "Admin — Announcements", description: "Message vendors or customers in-app and by email" },
+      { name: "Phone", description: "Verify a phone number on WhatsApp — automatic via the Cloud API, or by staff" },
+      { name: "Admin — Users", description: "Find users; verify phone numbers by hand" },
       { name: "Vendor" },
       { name: "Notifications" },
       { name: "Uploads" },
