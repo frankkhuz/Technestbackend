@@ -1,0 +1,45 @@
+# Nightly encrypted database backup (Atlas's free tier keeps none).
+#
+# Setup, once — GitHub repo → Settings → Secrets and variables → Actions →
+# New repository secret:
+#   MONGO_URI          the same value as on Render
+#   BACKUP_PASSPHRASE  a long random passphrase; keep a copy in a password
+#                      manager — backups can't be opened without it
+#
+# Each run keeps one encrypted file for 30 days: Actions → "Nightly database
+# backup" → a run → Artifacts. Restore with scripts/restore.js. Run it by
+# hand any time with "Run workflow". GitHub pauses scheduled workflows after
+# 60 days without commits — re-enable it from the Actions tab if that
+# happens.
+name: Nightly database backup
+
+on:
+  schedule:
+    - cron: "0 2 * * *" # 03:00 in Lagos
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install
+        run: npm install --omit=dev --no-audit --no-fund
+      - name: Back up
+        env:
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: node scripts/backup.js --out technest-backup.tnbk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: technest-backup-${{ github.run_number }}
+          path: technest-backup.tnbk
+          retention-days: 30
+          if-no-files-found: error

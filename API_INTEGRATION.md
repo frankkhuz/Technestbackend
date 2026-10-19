@@ -844,6 +844,16 @@ of the file every few months to pick up new phones.
 
 Set the Paystack webhook to `<backend>/api/checkout/webhook`.
 
+**Backups:** Atlas's free tier keeps none, so `.github/workflows/backup.yml`
+makes an encrypted backup every night at 03:00 (Lagos) and keeps 30 days.
+Set it up once: GitHub repo → Settings → Secrets and variables → Actions →
+add `MONGO_URI` (same as Render) and `BACKUP_PASSPHRASE` (16+ characters,
+keep a copy in a password manager — a backup can't be opened without it).
+Download a backup from Actions → "Nightly database backup" → a run →
+Artifacts. Restore: `BACKUP_PASSPHRASE=... node scripts/restore.js file.tnbk --list`
+to look inside, `--to "<mongodb uri>"` to restore into an **empty**
+database (it refuses to overwrite unless you add `--drop`).
+
 **Tests:** `npm test` runs every end-to-end suite in `test/` (about 300
 checks, a few minutes). Each suite starts the real server against a
 throwaway in-memory MongoDB with email, Paystack, Cloudinary and WhatsApp

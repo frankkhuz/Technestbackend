@@ -70,6 +70,49 @@ section("swap IMEI", async ({ C, db, ids }) => {
   t("laptop swaps don't need an IMEI", r.status === 200 || r.status === 201, J(r.json));
 });
 
+// ── Gap 2: encrypted backups ───────────────────────────────────────────────
+section("backups", async ({ db, mongo }) => {
+  const { execFile } = require("child_process");
+  const file = path.join(TMP, "test.tnbk");
+  const PASS = "correct horse battery staple";
+  // Async on purpose: a blocking run would freeze the in-memory database,
+  // which lives in this process
+  const script = (name, args, extra = {}) =>
+    new Promise((resolve) =>
+      execFile(process.execPath, [path.join(BACKEND, "scripts", name), ...args], {
+        cwd: BACKEND, encoding: "utf8", maxBuffer: 1e8, env: { ...baseEnv(), MONGO_URI: mongo.getUri("technest_test"), BACKUP_PASSPHRASE: PASS, ...extra },
+      }, (err, stdout, stderr) => resolve({ status: err ? err.code ?? 1 : 0, stdout, stderr }))
+    );
+  let r = await script("backup.js", ["--out", file], { BACKUP_PASSPHRASE: "short" });
+  t("backup refuses a short passphrase", r.status === 1 && /16/.test(r.stderr), r.stderr);
+  r = await script("backup.js", ["--out", file]);
+  t("backup runs", r.status === 0 && /Backed up \d+ documents/.test(r.stdout), r.stderr + r.stdout);
+  const raw = fs.readFileSync(file);
+  t("file is encrypted (no readable data inside)", raw.subarray(0, 5).toString() === "TNBK1" && !raw.includes("seller@t.com") && !raw.includes("users"));
+  r = await script("restore.js", [file, "--list"]);
+  t("--list shows what's inside", r.status === 0 && /users: 6/.test(r.stdout), r.stdout + r.stderr);
+  r = await script("restore.js", [file, "--list"], { BACKUP_PASSPHRASE: "wrong passphrase 123456" });
+  t("wrong passphrase refused", r.status === 1 && /wrong passphrase/.test(r.stderr));
+  const tampered = Buffer.from(raw); tampered[60] ^= 1;
+  fs.writeFileSync(file + ".bad", tampered);
+  r = await script("restore.js", [file + ".bad", "--list"]);
+  t("damaged file refused", r.status === 1 && /damaged/.test(r.stderr));
+  r = await script("restore.js", [file]);
+  t("restore needs an explicit --to", r.status === 1 && /--to/.test(r.stderr));
+  r = await script("restore.js", [file, "--to", mongo.getUri("technest_test")]);
+  t("won't restore over existing data", r.status === 1 && /already have data/.test(r.stderr));
+  const target = mongo.getUri("technest_restored");
+  r = await script("restore.js", [file, "--to", target]);
+  t("restore into an empty database", r.status === 0 && /Restored 6 into users/.test(r.stdout), r.stdout + r.stderr);
+  const restored = ctx.mongoose.connection.useDb("technest_restored");
+  const [a, b] = await Promise.all([db.collection("users").findOne({ email: "seller@t.com" }), restored.collection("users").findOne({ email: "seller@t.com" })]);
+  t("documents identical, ObjectIds and dates kept", J(a) === J(b) && b._id instanceof ctx.mongoose.Types.ObjectId && b.createdAt instanceof Date, J({ a, b }));
+  const counts = async (d) => Object.fromEntries(await Promise.all((await d.listCollections().toArray()).map(async (c) => [c.name, await d.collection(c.name).countDocuments()])));
+  t("every collection restored", J(Object.entries(await counts(db)).sort()) === J(Object.entries(await counts(restored.db)).sort()));
+  r = await script("restore.js", [file, "--to", target, "--only", "users", "--drop"]);
+  t("--only + --drop replaces just that collection", r.status === 0 && /Restored 6 into users/.test(r.stdout) && !/into listings/.test(r.stdout));
+});
+
 (async () => {
   const mongo = await MongoMemoryServer.create();
   const uri = mongo.getUri("technest_test");
