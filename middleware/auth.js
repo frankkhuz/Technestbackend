@@ -3,6 +3,9 @@ const User = require("../models/User");
 const { sendError } = require("../utils/response");
 const email = require("../utils/email");
 
+// Tokens from before session versions existed carry no "tv" — treat as 0
+const sessionStillValid = (decoded, user) => (decoded.tv || 0) === (user.tokenVersion || 0);
+
 const protect = async (req, res, next) => {
   const token = req.cookies?.accessToken;
   if (!token) return sendError(res, 401, "Not authorized");
@@ -12,9 +15,13 @@ const protect = async (req, res, next) => {
     req.user = await User.findById(decoded.id).select("-password");
 
     if (!req.user) return sendError(res, 401, "User no longer exists");
+    if (!sessionStillValid(decoded, req.user))
+      return sendError(res, 401, "You've been signed out — please log in again.");
 
     next();
-  } catch {
+  } catch (err) {
+    // A database outage isn't a bad token — let the error handler say so
+    if (err.name !== "JsonWebTokenError" && err.name !== "TokenExpiredError") return next(err);
     sendError(res, 401, "Invalid or expired token");
   }
 };
@@ -28,7 +35,8 @@ const optionalAuth = async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = await User.findById(decoded.id).select("-password");
+    const user = await User.findById(decoded.id).select("-password");
+    req.user = user && sessionStillValid(decoded, user) ? user : null;
   } catch {
     // Expired/invalid token — treat as a guest rather than failing the request
   }
@@ -64,6 +72,7 @@ const requireVendorVerified = (req, res, next) => {
 };
 
 module.exports = {
+  sessionStillValid,
   protect,
   optionalAuth,
   restrictTo,

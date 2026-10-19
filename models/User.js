@@ -13,6 +13,9 @@ const UserSchema = new mongoose.Schema(
       default: "user",
     },
     isVerified: { type: Boolean, default: false },
+    // Stamped into every login token; bumping it ends all existing sessions
+    // (password reset, "log out everywhere", admin force sign-out)
+    tokenVersion: { type: Number, default: 0 },
     verificationToken: String,
     verificationTokenExpires: Date,
     passwordResetToken: String,

@@ -3,7 +3,7 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const rateLimit = require("express-rate-limit");
 const User = require("../models/User");
-const { protect } = require("../middleware/auth");
+const { protect, sessionStillValid } = require("../middleware/auth");
 const { issueCsrfToken, verifyCsrfToken } = require("../middleware/csrf");
 const { sendSuccess, sendError } = require("../utils/response");
 const {
@@ -46,25 +46,26 @@ const cookieBaseOptions = {
 // re-signed via /api/auth/refresh for that change to actually take effect
 // client-side — the DB value alone isn't enough since middleware only
 // reads the token.
-const signAccessToken = (id, userType, vendorVerified) =>
+const signAccessToken = (id, userType, vendorVerified, tokenVersion) =>
   jwt.sign(
-    { id, userType, vendorVerified: !!vendorVerified },
+    { id, userType, vendorVerified: !!vendorVerified, tv: tokenVersion || 0 },
     process.env.JWT_SECRET,
     {
       expiresIn: "2d",
     }
   );
 
-const signRefreshToken = (id) =>
-  jwt.sign({ id }, process.env.JWT_REFRESH_SECRET, { expiresIn: "7d" });
+const signRefreshToken = (id, tokenVersion) =>
+  jwt.sign({ id, tv: tokenVersion || 0 }, process.env.JWT_REFRESH_SECRET, { expiresIn: "7d" });
 
 const setAuthCookies = (res, user) => {
   const accessToken = signAccessToken(
     user._id,
     user.userType,
-    user.vendorVerified
+    user.vendorVerified,
+    user.tokenVersion
   );
-  const refreshToken = signRefreshToken(user._id);
+  const refreshToken = signRefreshToken(user._id, user.tokenVersion);
 
   res.cookie("accessToken", accessToken, {
     ...cookieBaseOptions,
@@ -389,6 +390,8 @@ router.post("/reset-password", authLimiter, async (req, res, next) => {
     user.password = password;
     user.passwordResetToken = undefined;
     user.passwordResetExpires = undefined;
+    // Whoever might have the old password is signed out everywhere
+    user.tokenVersion = (user.tokenVersion || 0) + 1;
     // Opening the emailed link proves they own the address
     user.isVerified = true;
     await user.save();
@@ -423,11 +426,14 @@ router.post("/refresh", async (req, res) => {
     const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET);
     const user = await User.findById(decoded.id).select("-password");
     if (!user) return sendError(res, 401, "User no longer exists");
+    if (!sessionStillValid(decoded, user))
+      return sendError(res, 401, "You've been signed out — please log in again.");
 
     const accessToken = signAccessToken(
       user._id,
       user.userType,
-      user.vendorVerified
+      user.vendorVerified,
+      user.tokenVersion
     );
     res.cookie("accessToken", accessToken, {
       ...cookieBaseOptions,
@@ -463,6 +469,31 @@ router.post("/logout", verifyCsrfToken, protect, (req, res) => {
   res.clearCookie("refreshToken", cookieBaseOptions);
   res.clearCookie("csrfToken");
   sendSuccess(res, 200, "Logged out");
+});
+
+/**
+ * @swagger
+ * /api/auth/logout-all:
+ *   post:
+ *     summary: Log out on every device (e.g. after losing a phone)
+ *     description: Ends all sessions, including this one. Password resets do the same automatically.
+ *     tags: [Auth]
+ *     security:
+ *       - cookieAuth: []
+ *     responses:
+ *       200:
+ *         description: Logged out everywhere
+ */
+router.post("/logout-all", verifyCsrfToken, protect, async (req, res, next) => {
+  try {
+    await User.updateOne({ _id: req.user._id }, { $inc: { tokenVersion: 1 } });
+    res.clearCookie("accessToken", cookieBaseOptions);
+    res.clearCookie("refreshToken", cookieBaseOptions);
+    res.clearCookie("csrfToken");
+    sendSuccess(res, 200, "Logged out on every device");
+  } catch (err) {
+    next(err);
+  }
 });
 
 module.exports = router;

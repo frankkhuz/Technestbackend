@@ -164,6 +164,55 @@ section("revenue", async ({ C, db, ids }) => {
   t("finance is admin-only", r.status === 403);
 });
 
+// ── Gap 4: sign out on every device ────────────────────────────────────────
+section("sign out everywhere", async ({ db, Client, emails }) => {
+  const login = async (email, password = "password123") => {
+    const c = new Client();
+    const r = await c.req("POST", "/api/auth/login", { email, password });
+    return r.status === 200 ? c : null;
+  };
+  const reg = new Client();
+  await reg.req("POST", "/api/auth/register", { name: "Sess Test", email: "sess@t.com", password: "password123" });
+  await db.collection("users").updateOne({ email: "sess@t.com" }, { $set: { isVerified: true } });
+  const phoneA = await login("sess@t.com");
+  const phoneB = await login("sess@t.com");
+  t("signed in on two devices", (await phoneA.req("GET", "/api/me")).status === 200 && (await phoneB.req("GET", "/api/me")).status === 200);
+  let r = await phoneA.req("POST", "/api/auth/logout-all");
+  t("log out everywhere → 200", r.status === 200, J(r.json));
+  r = await phoneB.req("GET", "/api/me");
+  t("other device is signed out", r.status === 401 && /signed out/.test(r.json.message), J(r.json));
+  r = await phoneB.req("POST", "/api/auth/refresh");
+  t("its refresh token no longer works either", r.status === 401);
+  r = await phoneB.req("GET", "/api/listings");
+  t("public pages still work for it (as a guest)", r.status === 200);
+  const fresh = await login("sess@t.com");
+  t("logging in again works", fresh && (await fresh.req("GET", "/api/me")).status === 200);
+
+  // Password reset ends old sessions
+  const before = emails().length;
+  await new Client().req("POST", "/api/auth/forgot-password", { email: "sess@t.com" });
+  await sleep(300);
+  const link = emails().slice(before).find((e) => e.body.to[0].email === "sess@t.com")?.body.htmlContent.match(/token=([a-f0-9]+)/)?.[1];
+  r = await new Client().req("POST", "/api/auth/reset-password", { token: link, password: "brandnew123" });
+  t("password reset ok", r.status === 200, J(r.json));
+  t("…and the old session is ended", (await fresh.req("GET", "/api/me")).status === 401);
+  const afterReset = await login("sess@t.com", "brandnew123");
+
+  // Admin force sign-out
+  const id = (await db.collection("users").findOne({ email: "sess@t.com" }))._id;
+  r = await ctx.C.admin.req("POST", `/api/admin/users/${id}/sign-out`);
+  t("admin force sign-out", r.status === 200 && (await afterReset.req("GET", "/api/me")).status === 401, J(r.json));
+  r = await ctx.C.buyer.req("POST", `/api/admin/users/${id}/sign-out`);
+  t("only admins can force sign-out", r.status === 403);
+
+  // Logins from before this change carry no session version — still valid
+  const jwt = require(path.join(BACKEND, "node_modules/jsonwebtoken"));
+  const other = (await db.collection("users").findOne({ email: "other@t.com" }))._id;
+  const legacy = new Client();
+  legacy.cookies.accessToken = jwt.sign({ id: String(other), userType: "user", vendorVerified: false }, ctx.env.JWT_SECRET, { expiresIn: "1h" });
+  t("old-style token still works", (await legacy.req("GET", "/api/me")).status === 200);
+});
+
 (async () => {
   const mongo = await MongoMemoryServer.create();
   const uri = mongo.getUri("technest_test");

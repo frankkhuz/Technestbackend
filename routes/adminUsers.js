@@ -121,4 +121,32 @@ router.patch("/:id/phone", verifyCsrfToken, async (req, res, next) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/admin/users/{id}/sign-out:
+ *   post:
+ *     summary: Sign a user out on every device (e.g. a reported account takeover)
+ *     tags: [Admin — Users]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: All the user's sessions ended
+ */
+router.post("/:id/sign-out", verifyCsrfToken, async (req, res, next) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) return sendError(res, 404, "User not found");
+    const user = await User.findByIdAndUpdate(req.params.id, { $inc: { tokenVersion: 1 } }, { returnDocument: "after" }).select("name email");
+    if (!user) return sendError(res, 404, "User not found");
+    sendSuccess(res, 200, `${user.name} has been signed out everywhere`, { userId: user._id });
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;
