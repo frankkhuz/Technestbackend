@@ -11,6 +11,7 @@ const { templateDescription } = require("../utils/listingChecks");
 const { getAllDevices } = require("../utils/valuation");
 const ai = require("../utils/ai");
 const { screenListingImei, compareModel } = require("../utils/imei");
+const { freshConfirmation, REACTIVATE_WITHIN_DAYS } = require("../utils/listingExpiry");
 const router = express.Router();
 
 // imeiHash is select:false, but a document we just created or assigned it
@@ -85,6 +86,16 @@ const withoutImeiHash = (listing) => {
  *           bidCount for the total. The listing's owner and admins see
  *           everything.
  */
+// Back on the marketplace with a fresh 30 days — unless it expired so long
+// ago that it should be looked at again
+const renew = (listing) => {
+  const stale =
+    listing.status === "expired" &&
+    listing.expiredAt &&
+    Date.now() - listing.expiredAt > REACTIVATE_WITHIN_DAYS * 864e5;
+  Object.assign(listing, { status: stale ? "pending_review" : "active", ...freshConfirmation() });
+};
+
 // What anyone may see on the marketplace. TechNest is the middleman, so
 // the seller's contact details stay private; the owner and admins see
 // everything.
@@ -594,7 +605,11 @@ router.patch("/:id", protect, verifyCsrfToken, async (req, res, next) => {
       ownerSettableStatuses.includes(req.body.status) &&
       listing.status !== "pending_review"
     ) {
-      listing.status = req.body.status;
+      if (req.body.status !== "active") listing.status = req.body.status;
+      // Undoing "sold" or renewing an expired listing is fine; a rejected or
+      // removed listing (e.g. reported stolen) must go back through review
+      else if (["rejected", "removed"].includes(listing.status)) listing.status = "pending_review";
+      else renew(listing);
     }
 
     await listing.save();
@@ -711,6 +726,45 @@ router.post(
     }
   }
 );
+
+/**
+ * @swagger
+ * /api/listings/{id}/confirm:
+ *   post:
+ *     summary: Seller confirms the listing is still available
+ *     description: >
+ *       Listings need this every 30 days (a reminder goes out at 14) or they
+ *       expire and leave the marketplace. Confirming an expired listing
+ *       brings it back — straight away if it expired within 60 days,
+ *       otherwise through review again.
+ *     tags: [Listings]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: "data.listing (status active, or pending_review if it had been expired a long time)"
+ *       409:
+ *         description: Listing isn't active or expired (e.g. sold, in review)
+ */
+router.post("/:id/confirm", protect, verifyCsrfToken, async (req, res, next) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id))
+      return res.status(404).json({ success: false, error: "Listing not found" });
+    const listing = await Listing.findById(req.params.id);
+    if (!listing || String(listing.owner) !== String(req.user._id))
+      return res.status(404).json({ success: false, error: "Listing not found" });
+    if (!["active", "expired"].includes(listing.status))
+      return res.status(409).json({ success: false, error: "Only live or expired listings can be confirmed." });
+    renew(listing);
+    await listing.save();
+    res.json({ success: true, data: { listing: withoutImeiHash(listing) } });
+  } catch (err) {
+    next(err);
+  }
+});
 
 router.delete("/:id", protect, verifyCsrfToken, async (req, res, next) => {
   try {

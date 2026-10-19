@@ -213,6 +213,65 @@ section("sign out everywhere", async ({ db, Client, emails }) => {
   t("old-style token still works", (await legacy.req("GET", "/api/me")).status === 200);
 });
 
+// ── Gap 5: listings expire unless confirmed ────────────────────────────────
+section("listing expiry", async ({ C, db, ids, Client }) => {
+  const oid = (x) => new ctx.mongoose.Types.ObjectId(String(x));
+  const tick = () => new Client().req("POST", "/api/internal/tick", null, { "X-Cron-Secret": "cron" });
+  const mk = async (name) => {
+    const r = await C.seller.req("POST", "/api/listings", { userName: "S", userPhone: "08031234567", deviceName: name, deviceCategory: "laptop", subType: "windows", estimatedMin: 1, estimatedMax: 2, images: [] });
+    await C.admin.req("PATCH", `/api/admin/listings/${r.json.data.listing._id}/approve`);
+    return r.json.data.listing._id;
+  };
+  const L = await mk("Dell Latitude");
+  let l = await db.collection("listings").findOne({ _id: oid(L) });
+  t("approval stamps lastConfirmedAt", l.lastConfirmedAt && Date.now() - l.lastConfirmedAt < 60000);
+  const ago = (d) => new Date(Date.now() - d * 864e5);
+
+  await db.collection("listings").updateOne({ _id: oid(L) }, { $set: { lastConfirmedAt: ago(15) } });
+  let r = await tick();
+  t("day 15: reminder sent", r.json.data.listingsReminded === 1 && (await db.collection("notifications").countDocuments({ recipient: ids.seller, title: "Is your Dell Latitude still available?" })) === 1, J(r.json));
+  r = await tick();
+  t("…only once", r.json.data.listingsReminded === 0);
+
+  await db.collection("listings").updateOne({ _id: oid(L) }, { $set: { lastConfirmedAt: ago(31) } });
+  const held = await mk("Held Laptop");
+  await db.collection("listings").updateOne({ _id: oid(held) }, { $set: { lastConfirmedAt: ago(40), reservedUntil: new Date(Date.now() + 3600e3) } });
+  r = await tick();
+  l = await db.collection("listings").findOne({ _id: oid(L) });
+  t("day 31: expired + seller told", l.status === "expired" && l.expiredAt && (await db.collection("notifications").countDocuments({ recipient: ids.seller, title: "Your listing has expired" })) === 1, J(r.json));
+  t("listing held for a buyer is not expired", (await db.collection("listings").findOne({ _id: oid(held) })).status === "active");
+  r = await new Client().req("GET", "/api/listings");
+  t("expired listing leaves the marketplace", !r.json.data.listings.some((x) => x._id === L));
+  r = await new Client().req("GET", `/api/listings/${L}`);
+  t("…and its page", r.status === 404);
+  r = await C.buyer.req("POST", `/api/listings/${L}/confirm`);
+  t("only the seller can confirm", r.status === 404);
+  r = await C.seller.req("POST", `/api/listings/${L}/confirm`);
+  t("seller confirms → back on the marketplace", r.json?.data?.listing?.status === "active" && Date.now() - new Date(r.json.data.listing.lastConfirmedAt) < 60000, J(r.json));
+
+  await db.collection("listings").updateOne({ _id: oid(L) }, { $set: { status: "expired", expiredAt: ago(61) } });
+  r = await C.seller.req("POST", `/api/listings/${L}/confirm`);
+  t("expired over 60 days → back through review", r.json.data.listing.status === "pending_review");
+
+  await db.collection("listings").insertOne({ owner: ids.seller, userName: "S", userPhone: "x", deviceName: "Old Listing", deviceCategory: "laptop", subType: "windows", estimatedMin: 1, estimatedMax: 2, status: "active", bids: [], repairs: [], images: [], createdAt: ago(90), updatedAt: ago(90) });
+  r = await tick();
+  t("existing listings get a fresh 30 days (not expired on deploy)", r.json.data.listingsBackfilled === 1 && (await db.collection("listings").findOne({ deviceName: "Old Listing" })).status === "active", J(r.json));
+
+  // Moderation bypass fix
+  const R = await mk("Rejected Laptop");
+  await C.admin.req("PATCH", `/api/admin/listings/${R}/reject`, { reason: "Stock photos" });
+  r = await C.seller.req("PATCH", `/api/listings/${R}`, { status: "active" });
+  t("seller can't switch a rejected listing to active (goes to review)", r.json.data.listing.status === "pending_review", J(r.json));
+  const S = await mk("Stolen Laptop");
+  await db.collection("listings").updateOne({ _id: oid(S) }, { $set: { status: "removed", rejectionReason: "This device has been reported stolen." } });
+  r = await C.seller.req("PATCH", `/api/listings/${S}`, { status: "active" });
+  t("…nor a listing removed as stolen", r.json.data.listing.status === "pending_review");
+  const U = await mk("Sold By Mistake");
+  await C.seller.req("PATCH", `/api/listings/${U}`, { status: "sold" });
+  r = await C.seller.req("PATCH", `/api/listings/${U}`, { status: "active" });
+  t("undoing 'sold' still works", r.json.data.listing.status === "active");
+});
+
 (async () => {
   const mongo = await MongoMemoryServer.create();
   const uri = mongo.getUri("technest_test");

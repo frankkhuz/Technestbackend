@@ -117,10 +117,17 @@ const ListingSchema = new mongoose.Schema(
         "sold",
         "swapped",
         "removed",
+        "expired",
       ],
       default: "pending_review",
     },
     rejectionReason: { type: String, maxlength: 300, default: null },
+
+    // Listings must be confirmed still available every 30 days (a reminder
+    // goes out at 14) or they expire — see utils/listingExpiry.js
+    lastConfirmedAt: { type: Date, default: null },
+    reminderSentAt: { type: Date, default: null },
+    expiredAt: { type: Date, default: null },
 
     // Held for one buyer while TechNest arranges the deal (see
     // utils/availability.js). Expires by itself — no job needs to clear it.
@@ -152,6 +159,7 @@ ListingSchema.virtual("isAvailable").get(function () {
 
 ListingSchema.index({ deviceName: "text", deviceCategory: "text" });
 ListingSchema.index({ status: 1, createdAt: -1 });
+ListingSchema.index({ status: 1, lastConfirmedAt: 1 });
 ListingSchema.index({ owner: 1 });
 ListingSchema.index(
   { imeiHash: 1, status: 1 },

@@ -4,6 +4,7 @@ const DeviceRequest = require("../models/DeviceRequest");
 const Listing = require("../models/Listing");
 const { sendSuccess, sendError } = require("../utils/response");
 const { settleIfExpired } = require("../utils/matching");
+const { runListingExpiry } = require("../utils/listingExpiry");
 const router = express.Router();
 
 // Render's free tier has no cron jobs. Point a free scheduler (cron-job.org,
@@ -26,7 +27,7 @@ const authorized = (req) => {
  * @swagger
  * /api/internal/tick:
  *   post:
- *     summary: Scheduler only — close expired requests (auto-picking offers) and clear expired listing holds
+ *     summary: Scheduler only — close expired requests (auto-picking offers), clear expired holds, remind/expire unconfirmed listings
  *     description: Call every ~10 minutes from cron-job.org with the X-Cron-Secret header. Not for the frontend.
  *     tags: [Internal]
  *     security: []
@@ -37,7 +38,7 @@ const authorized = (req) => {
  *         schema: { type: string }
  *     responses:
  *       200:
- *         description: "data: { requestsClosed, holdsCleared }"
+ *         description: "data: { requestsClosed, holdsCleared, listingsBackfilled, listingsReminded, listingsExpired }"
  *       401:
  *         description: Wrong or missing secret
  *       503:
@@ -58,7 +59,9 @@ router.post("/tick", async (req, res, next) => {
       { reservedUntil: null, reservedFor: null }
     );
 
-    sendSuccess(res, 200, "Tick done", { requestsClosed: closed, holdsCleared: released.modifiedCount });
+    const expiry = await runListingExpiry();
+
+    sendSuccess(res, 200, "Tick done", { requestsClosed: closed, holdsCleared: released.modifiedCount, ...expiry });
   } catch (err) {
     next(err);
   }

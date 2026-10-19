@@ -9,6 +9,7 @@ const AiUsage = require("../models/AiUsage");
 const { runListingChecks, findMarketDevice } = require("../utils/listingChecks");
 const ai = require("../utils/ai");
 const { learnTacFromListing } = require("../utils/imei");
+const { freshConfirmation } = require("../utils/listingExpiry");
 const { privateUrl } = require("../utils/identity");
 const { protect, restrictTo } = require("../middleware/auth");
 const { verifyCsrfToken } = require("../middleware/csrf");
@@ -253,6 +254,7 @@ router.patch(
 
       listing.status = "active";
       listing.rejectionReason = null;
+      Object.assign(listing, freshConfirmation());
       await listing.save();
       await learnTacFromListing(listing);
 
