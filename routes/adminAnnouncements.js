@@ -5,7 +5,7 @@ const User = require("../models/User");
 const { protect, restrictTo } = require("../middleware/auth");
 const { verifyCsrfToken } = require("../middleware/csrf");
 const { sendSuccess, sendError } = require("../utils/response");
-const { sendEmail, clientUrl, isConfigured } = require("../utils/email");
+const { sendEmail, clientUrl, isConfigured, unsubscribeUrl } = require("../utils/email");
 const router = express.Router();
 
 router.use(protect, restrictTo("admin"));
@@ -35,6 +35,7 @@ const sendInBackground = async (announcement, users) => {
         paragraphs: [`Hi ${u.name.split(" ")[0]},`, ...announcement.message.split(/\n{2,}/)],
         button: { label: "Open TechNest", url: clientUrl() },
         footnote: "You're getting this because you have a TechNest account.",
+        unsubscribeUrl: unsubscribeUrl(u._id, "announcements"),
       });
       await Announcement.updateOne({ _id: announcement._id }, { $inc: ok ? { emailsSent: 1 } : { emailsFailed: 1 } });
     }
@@ -90,12 +91,13 @@ router.post("/", verifyCsrfToken, async (req, res, next) => {
     if (!AUDIENCES[audience]) return sendError(res, 400, `audience must be one of: ${Object.keys(AUDIENCES).join(", ")}`);
     if (!title || !message) return sendError(res, 400, "Write a title and a message.");
 
-    const users = await User.find(AUDIENCES[audience]).select("name email");
+    const users = await User.find({ ...AUDIENCES[audience], deletedAt: null }).select("name email emailPrefs");
     if (req.body.dryRun === true) return sendSuccess(res, 200, "Preview — nothing sent", { recipients: users.length });
     if (!users.length) return sendError(res, 400, "Nobody is in that audience yet.");
 
     const sendEmails = req.body.sendEmail === true;
-    const emailed = sendEmails ? users.slice(0, emailLimit()) : [];
+    // People who unsubscribed still get it in-app
+    const emailed = sendEmails ? users.filter((u) => u.emailPrefs?.announcements !== false).slice(0, emailLimit()) : [];
     const announcement = await Announcement.create({
       audience,
       title,
@@ -123,6 +125,7 @@ router.post("/", verifyCsrfToken, async (req, res, next) => {
       announcement,
       recipients: users.length,
       emailsQueued: emailed.length,
+      // Over the daily cap, or unsubscribed from announcements
       emailsSkipped: sendEmails ? users.length - emailed.length : 0,
       emailConfigured: isConfigured(),
     });

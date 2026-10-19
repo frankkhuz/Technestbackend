@@ -446,6 +446,71 @@ section("marketplace search", async ({ C, db, Client }) => {
   t("regex characters in a search are safe", (await g.req("GET", "/api/listings?q=(.*")).status === 200);
 });
 
+// ── Gap 10: delete account, export data, email preferences ─────────────────
+section("privacy rights", async ({ C, db, ids, Client, emails }) => {
+  const oid = (x) => new ctx.mongoose.Types.ObjectId(String(x));
+  const del = new Client();
+  await del.req("POST", "/api/auth/register", { name: "Dele Test", email: "del@t.com", password: "password123" });
+  await db.collection("users").updateOne({ email: "del@t.com" }, { $set: { isVerified: true } });
+  const delId = (await db.collection("users").findOne({ email: "del@t.com" }))._id;
+  let r = await del.req("POST", "/api/listings", { userName: "Dele", userPhone: "08031234567", deviceName: "Surface Pro 9", deviceCategory: "laptop", subType: "windows", estimatedMin: 1, estimatedMax: 2, images: [] });
+  const L = r.json.data.listing._id;
+  await del.req("POST", "/api/order-requests", { buyerPhone: "08035550000", items: [{ itemId: "iphone-13" }] });
+
+  // Preferences
+  r = await del.req("PATCH", "/api/me/email-preferences", { notifications: false });
+  t("turn off notification emails", r.json.data.emailPrefs.notifications === false && r.json.data.emailPrefs.announcements === true);
+  const before = emails().length;
+  await C.admin.req("PATCH", `/api/admin/listings/${L}/reject`, { reason: "Blurry photos" });
+  await sleep(300);
+  t("…still notified in-app, but not emailed", (await db.collection("notifications").countDocuments({ recipient: delId, type: "listing_update" })) === 1 && !emails().slice(before).some((e) => e.body.to[0].email === "del@t.com"));
+
+  // One-click unsubscribe from an announcement email
+  let b = emails().length;
+  await C.admin.req("POST", "/api/admin/announcements", { audience: "all_vendors", title: "Vendor news", message: "Hello vendors", sendEmail: true });
+  await sleep(600);
+  const mail = emails().slice(b).find((e) => e.body.to[0].email === "v2@t.com");
+  const link = mail?.body.htmlContent.match(/href="(https:\/\/client\.test\/api\/me\/unsubscribe[^"]+)"/)?.[1].replace(/&amp;/g, "&");
+  t("announcement emails carry an unsubscribe link + header", link && mail.body.headers?.["List-Unsubscribe"] === `<${link}>`, J(mail?.body.headers));
+  const local = link.replace("https://client.test", "");
+  r = await new Client().req("GET", local.replace(/s=[a-f0-9]+/, "s=" + "0".repeat(32)));
+  t("forged unsubscribe link refused", r.status === 400);
+  r = await new Client().req("GET", local);
+  t("one click unsubscribes (no login)", r.status === 200 && /unsubscribed/.test(r.text) && (await db.collection("users").findOne({ email: "v2@t.com" })).emailPrefs.announcements === false);
+  b = emails().length;
+  r = await C.admin.req("POST", "/api/admin/announcements", { audience: "all_vendors", title: "More news", message: "Hi again", sendEmail: true });
+  await sleep(600);
+  t("unsubscribed vendor gets it in-app only", !emails().slice(b).some((e) => e.body.to[0].email === "v2@t.com") && emails().slice(b).some((e) => e.body.to[0].email === "v1@t.com") && (await db.collection("notifications").countDocuments({ recipient: ids.v2, title: "More news" })) === 1);
+
+  // Export
+  r = await del.req("GET", "/api/me/export");
+  t("data export downloads as a file", r.status === 200 && /attachment; filename="technest-my-data-/.test(r.headers.get("content-disposition")) && r.json.profile.email === "del@t.com" && r.json.listings.length === 1 && r.json.whatsappOrders.length === 1, J(r.json?.profile));
+  t("export leaves out secrets", !/"password"|tokenVersion|imeiHash|verificationToken/.test(r.text));
+
+  // Deletion
+  r = await del.req("DELETE", "/api/me", { password: "wrong" });
+  t("delete needs the right password", r.status === 401);
+  await db.collection("devicerequests").updateOne({ _id: oid(ctx.completedRequest) }, { $set: { commissionStatus: "due" } });
+  r = await C.v1.req("DELETE", "/api/me", { password: "password123" });
+  t("can't delete while owing commission", r.status === 409 && /commission/.test(r.json.message));
+  await db.collection("devicerequests").updateOne({ _id: oid(ctx.completedRequest) }, { $set: { commissionStatus: "collected" } });
+  r = await C.admin.req("DELETE", "/api/me", { password: "password123" });
+  t("admins can't delete themselves here", r.status === 409);
+  r = await del.req("DELETE", "/api/me", { password: "password123" });
+  t("account deleted", r.status === 200, J(r.json));
+  const u = await db.collection("users").findOne({ _id: delId });
+  t("personal details wiped", u.name === "Deleted user" && /@deleted\.technest\.invalid$/.test(u.email) && u.deletedAt && !u.vendorProfile && !u.phone && !J(u).includes("del@t.com"), J(u));
+  t("signed out", (await del.req("GET", "/api/me")).status === 401);
+  const lst = await db.collection("listings").findOne({ _id: oid(L) });
+  const ord = await db.collection("orderrequests").findOne({ buyer: delId });
+  t("listings removed, open orders cancelled", lst.status === "removed" && ord.status === "cancelled", J({ l: lst.status, o: ord.status }));
+  t("name and phone wiped from past records too", lst.userName === "Deleted user" && lst.userPhone === "-" && ord.buyerName === "Deleted user" && ord.buyerPhone === "-" && !ord.buyerEmail, J({ lst, ord }));
+  r = await new Client().req("POST", "/api/auth/login", { email: "del@t.com", password: "password123" });
+  t("can't log in as the deleted account", r.status === 401);
+  r = await new Client().req("POST", "/api/auth/register", { name: "Dele Again", email: "del@t.com", password: "password123" });
+  t("email is free to sign up again", r.status === 201);
+});
+
 (async () => {
   const mongo = await MongoMemoryServer.create();
   const uri = mongo.getUri("technest_test");

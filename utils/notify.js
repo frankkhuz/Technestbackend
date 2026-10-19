@@ -3,7 +3,7 @@
 // reaches people who aren't looking at the app.
 const Notification = require("../models/Notification");
 const User = require("../models/User");
-const { sendEmail, clientUrl } = require("./email");
+const { sendEmail, clientUrl, unsubscribeUrl } = require("./email");
 
 /**
  * Notifies specific users. Each gets their own notification (so read
@@ -23,14 +23,15 @@ const notify = async (items) => {
 
   const emailed = list.filter((n) => n.email !== false);
   if (!emailed.length) return;
-  const users = await User.find({ _id: { $in: emailed.map((n) => n.recipient) } }).select("name email");
+  const users = await User.find({ _id: { $in: emailed.map((n) => n.recipient) } }).select("name email emailPrefs deletedAt");
   const byId = new Map(users.map((u) => [String(u._id), u]));
 
   // Not awaited: a slow email provider shouldn't hold up the response
   Promise.all(
     emailed.map((n) => {
       const user = byId.get(String(n.recipient));
-      if (!user?.email) return null;
+      // Still in the app either way — just no email for people who opted out
+      if (!user?.email || user.deletedAt || user.emailPrefs?.notifications === false) return null;
       return sendEmail({
         to: user.email,
         toName: user.name,
@@ -38,6 +39,7 @@ const notify = async (items) => {
         paragraphs: [`Hi ${user.name.split(" ")[0]},`, n.message],
         button: { label: "Open TechNest", url: clientUrl() },
         footnote: "You're getting this because of activity on your TechNest account.",
+        unsubscribeUrl: unsubscribeUrl(user._id, "notifications"),
       });
     })
   ).catch((err) => console.error("Notification emails failed:", err.message));

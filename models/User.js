@@ -13,6 +13,15 @@ const UserSchema = new mongoose.Schema(
       default: "user",
     },
     isVerified: { type: Boolean, default: false },
+    // Email preferences — security emails (verification, password reset)
+    // always go out regardless
+    emailPrefs: {
+      notifications: { type: Boolean, default: true },
+      announcements: { type: Boolean, default: true },
+    },
+    // Set when the person deletes their account (it's anonymised, not removed)
+    deletedAt: { type: Date, default: null },
+
     // Stamped into every login token; bumping it ends all existing sessions
     // (password reset, "log out everywhere", admin force sign-out)
     tokenVersion: { type: Number, default: 0 },

@@ -18,6 +18,7 @@ const PROVIDERS = {
         subject: msg.subject,
         htmlContent: msg.html,
         textContent: msg.text,
+        ...(msg.unsubscribeUrl ? { headers: { "List-Unsubscribe": `<${msg.unsubscribeUrl}>` } } : {}),
       }),
     }),
   resend: (msg) =>
@@ -34,6 +35,7 @@ const PROVIDERS = {
         subject: msg.subject,
         html: msg.html,
         text: msg.text,
+        ...(msg.unsubscribeUrl ? { headers: { "List-Unsubscribe": `<${msg.unsubscribeUrl}>` } } : {}),
       }),
     }),
 };
@@ -52,7 +54,7 @@ const escapeHtml = (s) =>
 
 // One plain, mobile-friendly layout for every email. Inline styles only —
 // most email clients ignore <style> blocks.
-const layout = ({ heading, paragraphs, button, footnote }) => {
+const layout = ({ heading, paragraphs, button, footnote, unsubscribeUrl }) => {
   const html = `<!doctype html><html><body style="margin:0;padding:0;background:#f4f5f7;font-family:Arial,Helvetica,sans-serif;color:#1f2933">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f5f7;padding:24px 12px"><tr><td align="center">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:12px;padding:28px">
@@ -61,8 +63,9 @@ const layout = ({ heading, paragraphs, button, footnote }) => {
 ${paragraphs.map((p) => `<tr><td style="font-size:15px;line-height:1.55;padding:4px 0">${escapeHtml(p)}</td></tr>`).join("")}
 ${button ? `<tr><td style="padding:20px 0 8px"><a href="${escapeHtml(button.url)}" style="display:inline-block;background:#111827;color:#ffffff;text-decoration:none;font-weight:bold;padding:12px 22px;border-radius:8px">${escapeHtml(button.label)}</a></td></tr>` : ""}
 ${footnote ? `<tr><td style="font-size:12px;line-height:1.5;color:#6b7280;padding-top:16px">${escapeHtml(footnote)}</td></tr>` : ""}
+${unsubscribeUrl ? `<tr><td style="font-size:12px;color:#6b7280;padding-top:8px"><a href="${escapeHtml(unsubscribeUrl)}" style="color:#6b7280">Unsubscribe from these emails</a></td></tr>` : ""}
 </table></td></tr></table></body></html>`;
-  const text = [heading, "", ...paragraphs, ...(button ? ["", `${button.label}: ${button.url}`] : []), ...(footnote ? ["", footnote] : [])].join("\n");
+  const text = [heading, "", ...paragraphs, ...(button ? ["", `${button.label}: ${button.url}`] : []), ...(footnote ? ["", footnote] : []), ...(unsubscribeUrl ? ["", `Unsubscribe: ${unsubscribeUrl}`] : [])].join("\n");
   return { html, text };
 };
 
@@ -70,14 +73,14 @@ ${footnote ? `<tr><td style="font-size:12px;line-height:1.5;color:#6b7280;paddin
  * Sends one email. Never throws — a failed email must not fail the request
  * that triggered it. Resolves to true when the provider accepted it.
  */
-const sendEmail = async ({ to, toName, subject, heading, paragraphs, button, footnote }) => {
-  const { html, text } = layout({ heading: heading || subject, paragraphs, button, footnote });
+const sendEmail = async ({ to, toName, subject, heading, paragraphs, button, footnote, unsubscribeUrl }) => {
+  const { html, text } = layout({ heading: heading || subject, paragraphs, button, footnote, unsubscribeUrl });
   if (!isConfigured()) {
     console.log(`[email not configured] to=${to} subject="${subject}"${button ? ` link=${button.url}` : ""}`);
     return false;
   }
   try {
-    const res = await provider()({ to, toName, subject, html, text });
+    const res = await provider()({ to, toName, subject, html, text, unsubscribeUrl });
     if (!res.ok) {
       console.error(`Email to ${to} failed: ${res.status} ${(await res.text().catch(() => "")).slice(0, 200)}`);
       return false;
@@ -88,6 +91,15 @@ const sendEmail = async ({ to, toName, subject, heading, paragraphs, button, foo
     return false;
   }
 };
+
+// One-click unsubscribe without logging in: the link carries an HMAC of
+// the user id and email type, so it can't be forged for someone else.
+// It goes through the frontend's /api rewrite to GET /api/me/unsubscribe.
+const UNSUBSCRIBE_TYPES = ["notifications", "announcements"];
+const unsubscribeSignature = (userId, type) =>
+  require("crypto").createHmac("sha256", process.env.JWT_SECRET).update(`unsubscribe:${userId}:${type}`).digest("hex").slice(0, 32);
+const unsubscribeUrl = (userId, type) =>
+  `${clientUrl()}/api/me/unsubscribe?u=${userId}&t=${type}&s=${unsubscribeSignature(String(userId), type)}`;
 
 const sendVerificationEmail = (user, rawToken) =>
   sendEmail({
@@ -114,6 +126,9 @@ const sendPasswordResetEmail = (user, rawToken) =>
   });
 
 module.exports = {
+  UNSUBSCRIBE_TYPES,
+  unsubscribeSignature,
+  unsubscribeUrl,
   isConfigured,
   sendEmail,
   sendVerificationEmail,
